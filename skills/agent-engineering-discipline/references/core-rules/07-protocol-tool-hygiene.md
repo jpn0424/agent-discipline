@@ -1,4 +1,4 @@
-# Core Rule 03: Protocol & Tool Hygiene (Stdio 隔離與零臆測 Schema)
+# Core Rule 07: Protocol & Tool Hygiene (Stdio 隔離與零臆測 Schema)
 
 ## 為什麼要制定此規則？ (Why)
 在 Stdio MCP 模式下，`stdout` 被 JSON-RPC 協定專用。若程式碼寫入裸 `print()`，診斷訊息會直接混入 JSON 串流，導致 MCP Client 報 JSON Parse Error 而崩潰。

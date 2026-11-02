@@ -1,5 +1,5 @@
 # <專案名> — <一句話說明這個 repo 是什麼>
-> 【必填】本檔為範本。複製至專案根目錄改名為 AGENTS.md，替換角括號佔位符。版式依 Core Rule 08 依序排列。同時建立 CLAUDE.md，內容只有標題與 `@AGENTS.md` 兩行，不含任何規範文字。
+> 【必填】本檔為範本。複製至專案根目錄改名為 AGENTS.md，替換角括號佔位符。版式依 Core Rule 10 依序排列。同時建立 CLAUDE.md，內容只有標題與 `@AGENTS.md` 兩行，不含任何規範文字。
 
 ## 專案定位與產出物
 > 【必填】定義專案核心產出物、被誰消費以及各自的修改邊界。以表格呈現，讓 Agent 先知道邊界再看規則。
@@ -16,7 +16,7 @@
 | 路徑 | 內容 |
 | --- | --- |
 | `<路徑>` | <內容> |
-| `docs/tasks/` | 工項與索引，工項編號格式 `TASK-YYYYMMDD-NN-<slug>` |
+| `docs/tasks/` | 工項與索引，工項編號格式 `TASK-YYYYMMDD-HHMMSS-<rr>-<slug>`（相容歷史 `TASK-YYYYMMDD-NN`） |
 | `AGENTS.md` / `CLAUDE.md` | 規範正本與參照 |
 
 ## Skills 分類與定位

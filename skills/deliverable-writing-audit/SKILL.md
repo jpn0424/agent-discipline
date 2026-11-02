@@ -23,7 +23,7 @@ description: "稽核並改寫交付文件的書寫徵狀。以徵狀目錄比對
 
 架構引用自 [conorbronsdon/avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing)：具名徵狀目錄、可靠度分層、嚴重度分級、情境寬容矩陣、固定輸出格式、第二輪自我稽核，以及「改寫時不得新增」的編輯者約束。徵狀內容本身不是移植而來，是從實際開發對話中反覆出現的糾正盤點出來的，逐條證據見 [references/pattern-catalog.md](references/pattern-catalog.md)。
 
-底層跨學科理論體系（涵蓋語用學 Grice 準則、受控語言 CNL、種加屬差與操作型定義、RFC 2119 道義模態、Robert Horn 資訊映射與契約式設計 DbC）詳見 [references/methodology-grounding.md](references/methodology-grounding.md)。
+底層跨學科理論體系（涵蓋語用學 Grice 準則、受控語言 CNL、種加屬差與操作型定義、RFC 2119 道義模態、Robert Horn 資訊映射與契約式設計 DbC）詳見 [references/methodology-grounding.md](references/methodology-grounding.md)——該檔供判讀 `C12`／`C13` 邊界案例或擴充新徵狀時參照，常態文件稽核只需讀取 [references/profile-matrix.md](references/profile-matrix.md) 與 [references/pattern-catalog.md](references/pattern-catalog.md)。
 
 ## 稽核模型：六個步驟
 
@@ -76,18 +76,18 @@ description: "稽核並改寫交付文件的書寫徵狀。以徵狀目錄比對
 
 ### 情境自動判定
 
-沒有指定 profile 時，依下列線索推斷，並在回覆中說明你判成哪個、為什麼：
+沒有指定 profile 時，依下列優先順序由上而下判定（命中第一條即鎖定），並在回覆中說明你判成哪個、為什麼：
 
-| 線索 | 判定 profile | 誰判 |
-| --- | --- | --- |
-| `docs/tasks/`、`TASK-*.md`、含「驗證結果」欄位 | `ticket` | 腳本依路徑 |
-| `CHANGELOG.md`、`decisions.md`、release notes | `changelog` | 腳本依路徑 |
-| 其餘一律 | `harness` | 腳本依路徑 |
-| 要給業務 agent 執行的 Skill 正本與 `references/` | `agent-facing` | 需 `--profile` 明指 |
-| 會被推向公開 repo 或交付給客戶／使用者的內容 | `deliverable` | 需 `--profile` 明指 |
-| commit message 草稿、PR 內容、review 回覆 | `pr-commit` | 需 `--profile` 明指 |
+| 優先序 | 線索與適用對象 | 判定 profile | 腳本推斷行為 |
+| :---: | --- | --- | --- |
+| 1 | `docs/tasks/`、`TASK-*.md`、或含「驗證結果」節之工作紀錄 | `ticket` | 腳本依路徑自動套用 |
+| 2 | `CHANGELOG.md`、`decisions.md`、release notes | `changelog` | 腳本依路徑自動套用 |
+| 3 | commit message 草稿、PR 內容、review 回覆 | `pr-commit` | 需 `--profile pr-commit` 明指 |
+| 4 | 約束開發區 AI coding agent 行為之治理規範（`AGENTS.md`、`CLAUDE.md`、`.claude/`、開發治理類 `SKILL.md` 與 `core-rules/`） | `harness` | 腳本未指定時之預設值 |
+| 5 | 交付給業務 agent 執行的領域 Skill 正本與 `references/` | `agent-facing` | 需 `--profile agent-facing` 明指 |
+| 6 | 其餘系統操作規範、能力說明、對外發布或交付給客戶與使用者的文件 | `deliverable` | 需 `--profile deliverable` 明指 |
 
-後三個情境**路徑判不出來**，腳本不猜：`skills/` 之下既可能是給業務 agent 的產出物正本，也可能是談開發工作流的規範——後者的 `Harness`、`.claude/`、`本機` 正是它的主題而不是雜訊，套 `agent-facing` 會整片誤判。你在對話中判得出讀者是誰，判出來就用 `--profile` 明指並在回覆說明理由；`harness` 是最安全的預設，規則全強度但允許本機路徑。
+第 3、5、6 項**光靠檔案路徑判不出來**，腳本不猜：`skills/` 之下既可能是給業務 agent 的產出物正本，也可能是談開發工作流的規範——後者的 `Harness`、`.claude/`、`本機` 正是它的主題而不是雜訊，套 `agent-facing` 會整片誤判。你在對話中讀完文件主題即可依上表優先序判出讀者是誰：非屬 AI agent 治理規範的一般技術文件、服務操作規範與能力說明一律歸第 6 項 `deliverable`，判出後以 `--profile` 明指並在回覆說明理由；腳本未加 `--profile` 時以 `harness` 為預設基底，規則全強度（含攔截單處本機絕對路徑）且略過開發者術語。
 
 ## 徵狀可靠度分層
 
@@ -109,36 +109,14 @@ detect 模式下 1A 與 1B 必須分開陳列並標明是哪一帶。把形式�
 
 ## 嚴重度分級
 
-快速稽核只做 P0 + P1，完整稽核三級全做。
+快速稽核只做 P0 + P1，完整稽核三級全做。本節僅列出四組徵狀的嚴重度定位與範圍索引，**不重述各徵狀的判定邊界、例外與修法**；執行稽核時（即使 `detect.py` 回報 0 處命中），下判讀或動手清理前**必須讀取 [references/pattern-catalog.md](references/pattern-catalog.md)** 逐條核對 14 項純語意徵狀：
 
-### P0 — 可信度與資安（立刻修）
-
-- 機敏值、真實憑證、真實單號／統編／主機名、內部帳號出現在交付內容
-- AI 署名：`provide by Claude`、`Generated with Claude`、`Co-Authored-By: Claude`、機器人 emoji
-- 假成功：宣稱「已修復」、「已完成」、「已驗證」而文件裡沒有對應證據
-- 殘留「未實測」、「待確認」、「不確定」作為能力宣稱的狀態值
-- 本機絕對路徑出現在會被散佈的內容中
-
-### P1 — 明顯的草稿味（交付前修）
-
-- 流水帳：比較新舊、敘述本次為什麼改、記錄被推翻的做法
-- 括號補述：用 `（）` 塞解釋與來龍去脈
-- 個人註記殘留：`TODO`、`FIXME`、「先這樣」、「我猜」
-- 無證據的能力限制宣稱：寫「做不到」、「只能」而沒有指出證據
-- 已退役術語復活：文件出現專案已明確廢除的名詞
-- 同一條規則重複散落在多個檔案，沒有單一事實來源
-- 該結構化卻寫成流水句：能力／限制／步驟應該逐項條列，卻擠成一段敘述
-- 專案特定事實滲入通用規範：共用規則裡寫死某個專案才有的工具名、狀態值、業務名詞
-- 同義反覆與非操作型定義：定義僅換句話說或缺乏可重複檢驗之操作步驟
-- 道義模態混淆：硬約束使用了弱修飾（過寬）或情境判準使用了絕對禁令（過死）
-
-### P2 — 版式打磨（有空再修）
-
-- emoji 密度過高
-- 條列標籤用句號結尾再接說明，而非冒號
-- 標題回音：標題下一行只是把標題換句話說
-- 模糊量詞與填充詞密度過高（「相關」、「之類」、「適當」、「盡量」）
-- 段落長度整齊到讀起來像模板
+| 嚴重度 | 目錄分組與編號範圍 | 涵蓋徵狀範疇（逐條定義、例外與正反對照見 [references/pattern-catalog.md](references/pattern-catalog.md)） |
+| :---: | --- | --- |
+| **P0**（立刻修） | **A 組：可信度與資安（`A1`–`A5`）** | 機敏值外洩（`A1`）、AI 署名（`A2`）、假成功宣稱（`A3`，純語意）、殘留「未實測／待確認」（`A4`）、本機絕對路徑（`A5`） |
+| **P1**（交付前修） | **B 組：草稿痕跡（`B1`–`B3`、`B5`–`B6`）** | 流水帳與比較新舊（`B1`）、括號補述（`B2`）、個人註記殘留（`B3`）、文件描述自己（`B5`，純語意）、標題與內容不相稱（`B6`，純語意） |
+| **P1**（交付前修） | **C 組：結構與邏輯（`C1`–`C13`）** | 無證據的限制宣稱（`C1`）、該結構化卻寫成流水句（`C2`）、已退役術語復活（`C3`）、規則重複散落（`C4`）、摘要掉錯誤原文（`C5`）、臆測填空（`C6`）、開發者術語滲入交付物（`C7`）、專案特定事實滲入通用規範（`C8`）、導覽夾帶內容（`C9`）、跨檔不一致（`C10`）、同一概念多個名字（`C11`）、同義反覆與非操作型定義（`C12`）、道義模態混淆（`C13`） |
+| **P2**（版式打磨） | **B4 與 D 組：局部格式與密度（`B4`、`D1`–`D4`）** | 標題回音（`B4`，純語意）、模糊量詞與填充詞密度（`D1`）、emoji 密度（`D2`）、條列標籤用句號（`D3`）、domain 細節過深（`D4`，純語意） |
 
 ## 機械化檢查
 

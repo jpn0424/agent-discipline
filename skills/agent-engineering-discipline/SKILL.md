@@ -15,17 +15,17 @@ description: "處理一件開發任務的治理紀律：改檔前先建立工項
 
 | 規則 | 規範範疇 |
 | --- | --- |
-| [Core Rule 01](references/core-rules/01-task-ticket-discipline.md) | 工項建立、狀態流轉、驗收條件與截圖紀錄 |
-| [Core Rule 02](references/core-rules/02-execution-safety.md) | 執行安全：不可復原操作之邊界與資源清理 |
-| [Core Rule 03](references/core-rules/03-protocol-tool-hygiene.md) | 協定與 Schema：stdout 隔離與零臆測 Schema |
-| [Core Rule 04](references/core-rules/04-deliverable-hygiene.md) | 交付物與 ADR：交付物純化、決策紀錄與稽核閘門 |
-| [Core Rule 05](references/core-rules/05-skill-and-agent-spec.md) | Skill 規格與雙層治理：Skill 撰寫規範與驗證者委派 |
-| [Core Rule 06](references/core-rules/06-authorization-boundary.md) | 授權邊界：動作授權、動詞定義與操作範圍鎖定 |
-| [Core Rule 07](references/core-rules/07-honesty-and-evidence.md) | 誠實與證據：宣稱、證據有效性與能力邊界宣告 |
-| [Core Rule 08](references/core-rules/08-harness-doc-layout.md) | Harness 文件分工：AGENTS.md 正本與工具版式分工 |
-| [Core Rule 09](references/core-rules/09-implementation-restraint.md) | 最小實作與相容邊界：夠用為準與相容性維護 |
-| [Core Rule 10](references/core-rules/10-delegation-contract.md) | 委派契約：任務交接時的輸入與驗收完備性 |
-| [Core Rule 11](references/core-rules/11-judgement-responsibility.md) | 判斷責任：自主推進與提問回報的邊界 |
+| [Core Rule 01](references/core-rules/01-judgement-responsibility.md) | 判斷責任：自主推進與提問回報的邊界 |
+| [Core Rule 02](references/core-rules/02-authorization-boundary.md) | 授權邊界：動作授權、動詞定義與操作範圍鎖定 |
+| [Core Rule 03](references/core-rules/03-task-ticket-discipline.md) | 工項建立、狀態流轉、驗收條件與截圖紀錄 |
+| [Core Rule 04](references/core-rules/04-delegation-contract.md) | 委派契約：任務交接時的輸入與驗收完備性 |
+| [Core Rule 05](references/core-rules/05-execution-safety.md) | 執行安全：不可復原操作之邊界與資源清理 |
+| [Core Rule 06](references/core-rules/06-implementation-restraint.md) | 最小實作與相容邊界：夠用為準與相容性維護 |
+| [Core Rule 07](references/core-rules/07-protocol-tool-hygiene.md) | 協定與 Schema：stdout 隔離與零臆測 Schema |
+| [Core Rule 08](references/core-rules/08-honesty-and-evidence.md) | 誠實與證據：宣稱、證據有效性與能力邊界宣告 |
+| [Core Rule 09](references/core-rules/09-deliverable-hygiene.md) | 交付物與 ADR：交付物純化、決策紀錄與稽核閘門 |
+| [Core Rule 10](references/core-rules/10-harness-doc-layout.md) | Harness 文件分工：AGENTS.md 正本與工具版式分工 |
+| [Core Rule 11](references/core-rules/11-skill-and-agent-spec.md) | Skill 規格與雙層治理：Skill 撰寫規範與驗證者委派 |
 
 本規範的條文分為兩種執行強度：
 
@@ -57,14 +57,14 @@ description: "處理一件開發任務的治理紀律：改檔前先建立工項
 
 | 動作 | 失誤形態 | 適用規則 |
 | --- | --- | --- |
-| 判斷 | 用猜測填掉查得到的空白；或反過來，把使用者已經表態的決策再推回去問 | [Core Rule 07](references/core-rules/07-honesty-and-evidence.md)、[Core Rule 11](references/core-rules/11-judgement-responsibility.md) |
-| 授權 | 動詞是「審查」卻動了手；回答的範圍超出被問的範圍 | [Core Rule 06](references/core-rules/06-authorization-boundary.md) |
-| 定義 | 沒有紀錄就動手；驗收判準留到看見結果之後才定 | [Core Rule 01](references/core-rules/01-task-ticket-discipline.md)、[Core Rule 10](references/core-rules/10-delegation-contract.md) |
-| 執行 | 建設用不到的抽象；擅自移除還在運作的相容層；憑記憶臆測結構定義 | [Core Rule 03](references/core-rules/03-protocol-tool-hygiene.md)、[Core Rule 09](references/core-rules/09-implementation-restraint.md) |
-| 取證 | 採信沒校準過的判定工具；用繞過使用者實際鏈路的方式驗證 | [Core Rule 04](references/core-rules/04-deliverable-hygiene.md)、[Core Rule 06](references/core-rules/06-authorization-boundary.md)、[Core Rule 07](references/core-rules/07-honesty-and-evidence.md) |
-| 回報 | 宣稱指不出證據；把失敗摘要掉 | [Core Rule 07](references/core-rules/07-honesty-and-evidence.md) |
+| 判斷 | 用猜測填掉查得到的空白；修改架構或規範前未先讀取專案既有的 `decisions.md` 核對已否決方案；或反過來，把使用者已經表態的決策再推回去問 | [Core Rule 01](references/core-rules/01-judgement-responsibility.md)、[Core Rule 08](references/core-rules/08-honesty-and-evidence.md)、[Core Rule 09](references/core-rules/09-deliverable-hygiene.md) |
+| 授權 | 動詞是「審查」卻動了手；回答的範圍超出被問的範圍 | [Core Rule 02](references/core-rules/02-authorization-boundary.md) |
+| 定義 | 沒有紀錄就動手；驗收判準留到看見結果之後才定 | [Core Rule 03](references/core-rules/03-task-ticket-discipline.md)、[Core Rule 04](references/core-rules/04-delegation-contract.md) |
+| 執行 | 建設用不到的抽象；擅自移除還在運作的相容層；憑記憶臆測結構定義 | [Core Rule 06](references/core-rules/06-implementation-restraint.md)、[Core Rule 07](references/core-rules/07-protocol-tool-hygiene.md) |
+| 取證 | 採信沒校準過的判定工具；用繞過使用者實際鏈路的方式驗證 | [Core Rule 02](references/core-rules/02-authorization-boundary.md)、[Core Rule 08](references/core-rules/08-honesty-and-evidence.md)、[Core Rule 09](references/core-rules/09-deliverable-hygiene.md) |
+| 回報 | 宣稱指不出證據；把失敗摘要掉 | [Core Rule 08](references/core-rules/08-honesty-and-evidence.md) |
 
-[Core Rule 06](references/core-rules/06-authorization-boundary.md) 與 [Core Rule 07](references/core-rules/07-honesty-and-evidence.md) 是最高頻的失誤防禦：越界動手與宣稱失真。
+[Core Rule 02](references/core-rules/02-authorization-boundary.md) 與 [Core Rule 08](references/core-rules/08-honesty-and-evidence.md) 是最高頻的失誤防禦：越界動手與宣稱失真。
 
 ## 方法 (Methods)
 
@@ -72,16 +72,16 @@ description: "處理一件開發任務的治理紀律：改檔前先建立工項
 
 - **測試驅動**：查閱 [test-first.md](references/methods/test-first.md)。依改動對象判定測試層級（單元測試 vs 驗收測試），並確認紅燈紅在行為斷言而非連線失敗。
 - **複雜規劃**：查閱 [brainstorm-and-plan.md](references/methods/brainstorm-and-plan.md)。涉及架構調整或複雜重構時，動手前先研析並輸出計畫，暫停等待使用者核可。
-- **研究**：交付物是報告而不含實作時採用。不另立方法檔，驗收形式見 [10-delegation-contract.md](references/core-rules/10-delegation-contract.md)——比對形式結構完整度、查核引用來源與佐證齊備度，不以測試轉綠為準。
+- **研究**：交付物是報告而不含實作時採用。不另立方法檔，驗收形式見 [04-delegation-contract.md](references/core-rules/04-delegation-contract.md)——比對形式結構完整度、查核引用來源與佐證齊備度，不以測試轉綠為準。
 - **外部標準方法**：如 BDD、SDD 等，直接具名宣告於工項，不重述外部既有定義。
 
 ## 範本 (Assets)
 
 存放於 [assets/](assets/) 目錄，提供任務產出物之標準結構：
 
-- **建立工項**：複製 [task-template.md](assets/task-template.md) 至 `docs/tasks/TASK-YYYYMMDD-NN-<slug>.md`，動手改檔前界定範圍、限制與可檢驗的驗收條件。
+- **建立工項**：複製 [task-template.md](assets/task-template.md) 至 `docs/tasks/TASK-YYYYMMDD-HHMMSS-<rr>-<slug>.md`，動手改檔前界定範圍、限制與可檢驗的驗收條件。取號指令：`python3 -c "import time,secrets; print(time.strftime('TASK-%Y%m%d-%H%M%S-') + secrets.token_hex(1))"`。
 - **架構決策紀錄**：複製 [decision-template.md](assets/decision-template.md) 至 `docs/decisions/decisions.md`（或專案約定之決策檔如 `.claude/decisions.md`），記錄涉及架構、相容性或外部影響的決策。
-- **專案 Harness 正本**：複製 [agents-template.md](assets/agents-template.md) 至專案根目錄並命名為 `AGENTS.md`，版式遵循 [Core Rule 08](references/core-rules/08-harness-doc-layout.md)，依專案特性填寫定位與自訂規則。
+- **專案 Harness 正本**：複製 [agents-template.md](assets/agents-template.md) 至專案根目錄並命名為 `AGENTS.md`，版式遵循 [Core Rule 10](references/core-rules/10-harness-doc-layout.md)，依專案特性填寫定位與自訂規則。
 
 ## 結構檢查 (Structure Check)
 

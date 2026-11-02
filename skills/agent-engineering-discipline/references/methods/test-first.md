@@ -23,4 +23,4 @@
 
 ## 相關
 
-測試失敗時把錯誤原文完整填回對話再修，不摘要，見 [Core Rule 07](../core-rules/07-honesty-and-evidence.md)。測試暫存檔的清理方式與保留邊界見 [Core Rule 02](../core-rules/02-execution-safety.md)。完成判準的可判定性要求見 [Core Rule 10](../core-rules/10-delegation-contract.md)。
+測試失敗時把錯誤原文完整填回對話再修，不摘要，見 [Core Rule 08](../core-rules/08-honesty-and-evidence.md)。測試暫存檔的清理方式與保留邊界見 [Core Rule 05](../core-rules/05-execution-safety.md)。完成判準的可判定性要求見 [Core Rule 04](../core-rules/04-delegation-contract.md)。

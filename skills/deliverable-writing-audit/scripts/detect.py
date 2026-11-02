@@ -44,7 +44,6 @@ SEVERITY_ORDER = {"P0": 0, "P1": 1, "P2": 2}
 # 情境寬容矩陣。未列出者一律 strict。
 PROFILES = {
     "harness": {
-        "abs-path": "relaxed",
         "dev-jargon-leak": "skip",
         "emoji-density": "relaxed",
         "duplicated-rule": "extra",
