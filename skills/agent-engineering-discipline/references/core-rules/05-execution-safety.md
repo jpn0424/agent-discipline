@@ -1,4 +1,4 @@
-# Core Rule 02: Execution Safety & Resource Hygiene (Git 安全與資源清理)
+# Core Rule 05: Execution Safety & Resource Hygiene (Git 安全與資源清理)
 
 ## 為什麼要制定此規則？ (Why)
 未經確認的自動 Commit 會污染 Git Commit History；而使用 `rm -rf` 刪除測試暫存檔則無法復原，容易誤刪重要檔案。

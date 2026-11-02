@@ -1,4 +1,4 @@
-# Core Rule 08: Harness Document Layout (AGENTS.md 正本與參照分工)
+# Core Rule 10: Harness Document Layout (AGENTS.md 正本與參照分工)
 
 ## 目錄 (Contents)
 
@@ -36,7 +36,7 @@
 `@AGENTS.md` 是 Claude Code 的匯入指令，載入時會把 `AGENTS.md` 的內容展開進 context。因此 `CLAUDE.md` 裡任何額外的規範文字都是第二份副本。
 
 > [!NOTE]
-> 本節具名特定工具是**刻意的**，不違反 [Core Rule 05](05-skill-and-agent-spec.md)。這一節的主題就是各工具入口檔的分工，檔名與匯入語法本身即規則內容，換成通用敘述反而無法執行。其他工具依各自的匯入語法照同一模式建立入口檔。
+> 本節具名特定工具是**刻意的**，不違反 [Core Rule 11](11-skill-and-agent-spec.md)。這一節的主題就是各工具入口檔的分工，檔名與匯入語法本身即規則內容，換成通用敘述反而無法執行。其他工具依各自的匯入語法照同一模式建立入口檔。
 
 ### 2. `AGENTS.md` 的版式 (Canonical Structure)
 
@@ -93,7 +93,7 @@
 - **把 agent 執行用的正本放進 `docs/`**：那屬於 `.claude/skills/`。`docs/` 是給人與開發者 Agent 讀的紀錄，不是任務執行指令。
 
 > [!IMPORTANT]
-> **`references/` 這個名字在兩個層級有不同語意，不要混用。** 專案根目錄的 `references/` 是上述的外部參照物；Skill 目錄內的 `references/`（`skills/<name>/references/`）是該 Skill 漸進揭露用的細節文件，屬 Skill 正本的一部分，規範見 [Core Rule 05](05-skill-and-agent-spec.md)。兩者都可能出現在同一個專案裡。
+> **`references/` 這個名字在兩個層級有不同語意，不要混用。** 專案根目錄的 `references/` 是上述的外部參照物；Skill 目錄內的 `references/`（`skills/<name>/references/`）是該 Skill 漸進揭露用的細節文件，屬 Skill 正本的一部分，規範見 [Core Rule 11](11-skill-and-agent-spec.md)。兩者都可能出現在同一個專案裡。
 
 **為什麼判準要用「誰產出的」而不是「講業務還是講開發」**：後者在邊界上判不出來。產出物的業務應用情境既是業務也是開發前提，交付映射指南既講架構也講流程。改用產出歸屬就沒有模糊地帶——本專案寫的進 `docs/`，本專案只能讀的進 `references/`。分錯的代價是 Agent 去改一份它無權修改的外部正本，或把唯讀參照當成本專案的待辦來維護。
 

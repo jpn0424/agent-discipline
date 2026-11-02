@@ -1,4 +1,4 @@
-# Core Rule 05: Skill Frontmatter & Multi-Agent Delegation (Skill 與 Subagent 雙層治理)
+# Core Rule 11: Skill Frontmatter & Multi-Agent Delegation (Skill 與 Subagent 雙層治理)
 
 ## 為什麼要制定此規則？ (Why)
 缺少 YAML Frontmatter 會導致相容本規範的 Agent 無法自動探索並動態載入 Skill。
@@ -92,7 +92,7 @@ Skill 會被安裝到你沒看過的專案。把某個專案的工具名、端�
 
 反過來做——先寫完規則再找情境驗證——寫出的是針對想像需求的內容，而且無法被否證：沒有基線就判斷不出它改善了什麼。
 
-驗收不由撰寫者自己做。撰寫的工作階段與實際使用的工作階段要分開，後者不帶前者的脈絡。這與 [Core Rule 10](10-delegation-contract.md) 執行者不自證通過是同一件事，只是套在 Skill 開發上。
+驗收不由撰寫者自己做。撰寫的工作階段與實際使用的工作階段要分開，後者不帶前者的脈絡。這與 [Core Rule 04](04-delegation-contract.md) 執行者不自證通過是同一件事，只是套在 Skill 開發上。
 
 ### 5. Subagent 雙層治理 (Developer vs Validator)
 - **Developer Agent (主開發者)**：負責撰寫程式碼、修改邏輯與準備工項。
