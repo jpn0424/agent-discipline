@@ -92,4 +92,4 @@ python3 scripts/check_skill_spec.py <專案路徑>
 # 選項：--json 輸出結構化結果
 ```
 
-無外部依賴，Python 3 標準庫即可。結束碼 `0` 表示通過、`1` 表示有缺陷、`2` 表示執行錯誤。檢查確定性的結構事實：frontmatter 完整性、`name` 命名、禁止角括號標籤、目錄內不得放 README.md、子目錄無多餘 frontmatter、相對連結有效性，以及 `CLAUDE.md` 僅限標題與 `@AGENTS.md` 參照。
+無外部依賴，Python 3 標準庫即可。結束碼 `0` 表示通過、`1` 表示有缺陷、`2` 表示執行錯誤。檢查確定性的結構事實：frontmatter 完整性、`name` 命名、禁止角括號標籤、目錄內不得放 README.md、目錄內不得包含符號連結、子目錄無多餘 frontmatter、相對連結有效性，以及 `CLAUDE.md` 僅限標題與 `@AGENTS.md` 參照。

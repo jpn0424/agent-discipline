@@ -13,7 +13,7 @@
 | `unverified-status` | A4 | 「未實測」殘留 | 狀態詞比對 |
 | `abs-path` | A5 | 本機絕對路徑 | 路徑前綴比對，涵蓋 code span 內；佔位符化的形態不符字元集，天然豁免 |
 | `change-narration` | B1 | 流水帳與比較新舊 | 句型比對 |
-| `paren-gloss` | B2 | 括號補述 | 括號內含中文且含解釋詞 |
+| `paren-gloss` | B2 | 括號補述 | 括號內含中英文解釋詞或因果補述標記 |
 | `note-to-self` | B3 | 個人註記殘留 | 標記詞比對 |
 | `retired-term` | C3 | 已退役術語復活 | `--terms` 提供的清單比對 |
 | `duplicated-rule` | C4 | 規則重複散落 | 跨檔完全重複的實質內容行 |

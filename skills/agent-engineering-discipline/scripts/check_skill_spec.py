@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from dataclasses import dataclass, field
@@ -190,8 +191,25 @@ def check_skill(skill_dir: Path, report: Report) -> None:
         report.add("P1", "skill-readme", readme, 1,
                    "Skill 目錄內不得有 README.md，說明請整合進 SKILL.md")
 
+    check_no_symlinks_in_skill(skill_dir, report)
     check_no_frontmatter_in_subfiles(skill_dir, report)
     check_relative_links(skill_dir, report)
+
+
+def check_no_symlinks_in_skill(skill_dir: Path, report: Report) -> None:
+    """Skill 正本目錄內部不得包含任何符號連結。
+
+    符號連結在跨專案安裝或發布打包時會失效，且當 ln -s 未帶 -n 旗標時，
+    極易在 Skill 目錄內部產生指向自身的無限循環參照。
+    """
+    for dirpath, dirnames, filenames in os.walk(skill_dir, followlinks=False):
+        base = Path(dirpath)
+        for name in sorted(dirnames + filenames):
+            candidate = base / name
+            if candidate.is_symlink():
+                target = os.readlink(candidate)
+                report.add("P0", "skill-internal-symlink", candidate, 1,
+                           f"Skill 目錄內不得包含符號連結（指向 `{target}`），請移除或改用 `ln -snf` 掛載外部入口")
 
 
 def check_no_frontmatter_in_subfiles(skill_dir: Path, report: Report) -> None:

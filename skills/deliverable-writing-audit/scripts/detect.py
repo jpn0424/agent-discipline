@@ -114,7 +114,15 @@ RE_AI_SIGNATURE = re.compile(
     r"(?:provide[d]?\s+by\s+claude|generated\s+with\s+\[?claude|co-authored-by:\s*claude|🤖)",
     re.IGNORECASE,
 )
-RE_UNVERIFIED = re.compile(r"未實測|未測試|待確認|待驗證|尚未驗證|推定支援|狀態未知|\bTBD\b|\bTODO\b(?=.*(?:測|驗))")
+RE_UNVERIFIED = re.compile(
+    r"未實測|未測試|待確認|待驗證|尚未驗證|推定支援|狀態未知"
+    r"|\buntested\b|\bto be confirmed\b|\bto be verified\b|\byet to be (?:tested|verified)\b"
+    r"|\bnot yet (?:tested|verified)\b|\bassumed supported\b|\bstatus unknown\b"
+    r"|(?:status|state|\bis|\bremains|\bleft)\s*[:=]?\s*\bunverified\b"
+    r"|\|\s*unverified\s*\|"
+    r"|\bTBD\b|\bTODO\b(?=.*(?:test|verif|測|驗))",
+    re.IGNORECASE,
+)
 RE_ABS_PATH = re.compile(r"(?:/Users/[A-Za-z0-9._-]+|/home/[A-Za-z0-9._-]+|[A-Za-z]:\\\\?Users\\\\?[A-Za-z0-9._-]+)")
 # 「已退役術語」這類定語用法是分類標籤而非變更敘述，以 lookahead 排除。
 RE_CHANGE_NARRATION = re.compile(
@@ -130,14 +138,37 @@ RE_CHANGE_NARRATION = re.compile(
     r"|不再(?:使用|支援|走)"
     r"|第[一二三四五六七八九十\d]+輪(?:修正|調整)"
     r"|從前"
+    r"|\boriginally\b[^\n]{0,35}\b(?:changed to|replaced with|updated to)\b"
+    r"|\bpreviously\s+(?:was|used|relied on|adopted|walked|ran)\b"
+    r"|\bformerly\s+(?:was|used|relied on|adopted)\b"
+    r"|\bin this\s+(?:update|change|modification|refactor|revision)\b"
+    r"|\bwe\s+later\s+(?:found|discovered|changed)\b"
+    r"|\bthe\s+old\s+(?:version|approach|method)\s+(?:was|used)\b"
+    r"|\bhas\s+been\s+(?:changed to|deprecated|retired|removed|abolished)\b"
+    r"|\bno\s+longer\s+(?:used|supported|active)\b"
+    r"|\bafter\s+round\s+(?:one|two|three|four|five|\d+)\s+of\s+(?:fixes|changes|revisions|updates)\b",
+    re.IGNORECASE,
 )
-RE_NOTE_TO_SELF = re.compile(r"\bTODO\b|\bFIXME\b|\bXXX\b|待補|先這樣|我猜|暫時先|等等再說|\?\?\?")
-RE_LIMIT_CLAIM = re.compile(r"做不到|只能由|無法(?:取得|讀取|建立|完成|支援)|不支援|辦不到")
-RE_EVIDENCE = re.compile(r"錯誤原文|原文如下|實測|已驗證|截圖|TASK-\d|AD-\d|HD-\d|證據|errors?[:：]")
+RE_NOTE_TO_SELF = re.compile(
+    r"\bTODO\b|\bFIXME\b|\bXXX\b|\bHACK\b|\bfill in later\b|\bfor now just\b|\bI guess\b|\bfix later\b"
+    r"|待補|先這樣|我猜|暫時先|等等再說|\?\?\?"
+)
+RE_LIMIT_CLAIM = re.compile(
+    r"做不到|只能由|無法(?:取得|讀取|建立|完成|支援)|不支援|辦不到"
+    r"|\bcannot\s+(?:fetch|retrieve|read|create|complete|support|be\s+fetched|be\s+retrieved|be\s+read|be\s+created|be\s+supported)\b"
+    r"|\bdoes\s+not\s+support\b|\bis\s+not\s+supported\b|\bonly\s+supported\s+(?:by|via)\b"
+    r"|\bimpossible\s+to\s+(?:fetch|read|create|support)\b",
+    re.IGNORECASE,
+)
+RE_EVIDENCE = re.compile(
+    r"錯誤原文|原文如下|實測|已驗證|截圖|TASK-\d|AD-\d|HD-\d|證據|errors?[:：]"
+    r"|\bverbatim\s+error\b|\berror\s+output\b|\bverified\b|\btested\b|\bscreenshot\b|\bevidence\b|\bHTTP\s+[45]\d\d\b",
+    re.IGNORECASE,
+)
 RE_DEV_JARGON = re.compile(r"\.claude/|\.agents/|Harness|本機|本地開發|subagent|validator|AD-\d{3,}|HD-\d{3,}|TASK-\d{6,}")
 # 只抓粗體標籤形式。未加粗的開頭片段常是完整句子（「重新執行測試。若…」），
 # 而中文動詞偵測不可靠，無法用正則分出標籤與句子，因此收斂到誤判最低的強形式。
-RE_LABEL_PERIOD = re.compile(r"^\s*[-*+]\s+\*\*([^*。：:\n]{1,20})。\*\*\s*\S")
+RE_LABEL_PERIOD = re.compile(r"^\s*[-*+]\s+\*\*([^*。：:\n]{1,30})[。.]\*\*\s*\S")
 RE_HEADING = re.compile(r"^\s{0,3}#{1,6}\s")
 RE_TABLE_ROW = re.compile(r"^\s*\|")
 RE_EMOJI = re.compile(
@@ -147,6 +178,10 @@ RE_EMOJI = re.compile(
 STATUS_GLYPHS = set("✅⚠️❌✔️❎⛔️🔴🟠🟡".replace("️", "")) | {"✅", "⚠", "❌", "✔", "🔴", "🟠", "🟡"}
 
 VAGUE_WORDS = ["相關", "之類", "等等", "適當", "盡量", "某種", "某些", "一些", "大概", "基本上", "原則上"]
+RE_VAGUE_EN = re.compile(
+    r"\betc\.|\band so on\b|\bappropriately\b|\bas much as possible\b|\bsome kind of\b|\broughly\b|\bbasically\b|\bin principle\b",
+    re.IGNORECASE,
+)
 
 # 密度門檻，單位為每千字元命中數。這兩條是 Tier 3 徵狀：被計數的字詞本身都是正常用字，
 # 只有密度明顯偏高才代表文件在用模糊詞或裝飾替代具體敘述。門檻因此刻意設在遠高於
@@ -163,8 +198,12 @@ VAGUE_PER_KCHAR = 4.0   # 現行語料最高值的約 1.5 倍
 # 括號內出現這些字代表是補敘述而非術語對照。
 # {2,80}：下限 2 排除空括號與單字元符號；上限 80 之外的括號內容已是完整段落，
 # 屬「該寫成正文」而不是「括號補述」，改由 C2 該結構化卻寫成流水句判讀。
-RE_PAREN = re.compile(r"[（(]([^（()）]{2,80})[)）]")
+RE_PAREN = re.compile(r"(?<!\])[（(]([^（()）]{2,100})[)）]")
 PAREN_GLOSS_HINT = re.compile(r"因為|所以|其實|亦即|也就是|原本|之前|曾經|已棄用|為了|避免|例如|注意|不是|舊的|導致|以免|意思是")
+PAREN_GLOSS_HINT_EN = re.compile(
+    r"\b(?:because|since|therefore|i\.e\.|that is|namely|originally|previously|formerly|deprecated|in order to|to avoid|for example|e\.g\.|note that|meaning that|used to|which we)\b",
+    re.IGNORECASE,
+)
 
 
 # ---------------------------------------------------------------- 前處理
@@ -266,14 +305,22 @@ def scan_file(path: Path, terms: list[str]) -> list[Hit]:
 
         for m in RE_PAREN.finditer(masked):
             inner = m.group(1)
-            if not re.search(r"[一-鿿]", inner):
-                continue  # 純英文／符號視為術語對照
-            borderline = not PAREN_GLOSS_HINT.search(inner)
-            if borderline and len(inner) <= 8:
-                continue
-            hits.append(Hit("paren-gloss", lineno, raw[m.start():m.end()], borderline=borderline))
+            if re.search(r"[一-鿿]", inner):
+                borderline = not PAREN_GLOSS_HINT.search(inner)
+                if borderline and len(inner) <= 8:
+                    continue
+                hits.append(Hit("paren-gloss", lineno, raw[m.start():m.end()], borderline=borderline))
+            else:
+                if PAREN_GLOSS_HINT_EN.search(inner):
+                    hits.append(Hit("paren-gloss", lineno, raw[m.start():m.end()], borderline=False))
+                elif len(inner.split()) >= 12:
+                    hits.append(Hit("paren-gloss", lineno, raw[m.start():m.end()], borderline=True))
 
-        if RE_LIMIT_CLAIM.search(masked) and not RE_EVIDENCE.search(raw):
+        if (
+            RE_LIMIT_CLAIM.search(masked)
+            and not re.search(r"\b(?:if|when|whenever|unless)\b[^\n]{0,35}\bcannot\b", masked, re.IGNORECASE)
+            and not RE_EVIDENCE.search(raw)
+        ):
             hits.append(Hit("unevidenced-limit", lineno, raw, "同一行找不到證據標記，需人工核對"))
 
         for t in terms:
@@ -305,12 +352,20 @@ def scan_file(path: Path, terms: list[str]) -> list[Hit]:
                     f"每千字 {per_kchar:.1f} 個，共 {len(emoji_hits)} 個")
             )
 
-    vague_total = sum(masked.count(w) for _, _, masked, _ in lines for w in VAGUE_WORDS)
+    vague_total = sum(
+        sum(masked.count(w) for w in VAGUE_WORDS) + len(RE_VAGUE_EN.findall(masked))
+        for _, _, masked, _ in lines
+    )
     if vague_total:
         per_kchar = vague_total * 1000 / body_chars
         if per_kchar >= VAGUE_PER_KCHAR:
             first = next(
-                (lineno for lineno, _, masked, _ in lines if any(w in masked for w in VAGUE_WORDS)), 1
+                (
+                    lineno
+                    for lineno, _, masked, _ in lines
+                    if any(w in masked for w in VAGUE_WORDS) or RE_VAGUE_EN.search(masked)
+                ),
+                1,
             )
             hits.append(Hit("vague-filler", first, f"共 {vague_total} 處",
                             f"每千字 {per_kchar:.1f} 處，超過 {VAGUE_PER_KCHAR} 門檻"))
