@@ -55,7 +55,7 @@ When proposing or revising a symptom in `deliverable-writing-audit`, provide all
 
 ### 4. Local Verification
 
-Before submitting, run both built-in verification scripts from the suite root (or `i18n/en` root):
+Before submitting, run both built-in verification scripts from the suite root (or from the `i18n/zh-tw` root to check the Traditional Chinese edition):
 
 ```bash
 python3 skills/agent-engineering-discipline/scripts/check_skill_spec.py .
@@ -72,4 +72,4 @@ Additionally, ensure all scripts rely exclusively on the Python 3 standard libra
 
 ## License
 
-By submitting a contribution to this project, you agree that your contribution will be licensed under the [MIT License](../../LICENSE).
+By submitting a contribution to this project, you agree that your contribution will be licensed under the [MIT License](LICENSE).

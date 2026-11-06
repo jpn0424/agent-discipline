@@ -9,7 +9,9 @@
     python3 check_skill_spec.py <path...> --json
 
 path 可以是 Skill 目錄本身、包含多個 Skill 的目錄、或專案根目錄。
-腳本會遞迴尋找所有含 SKILL.md 的目錄，以及所有 CLAUDE.md。
+腳本會遞迴尋找所有含 SKILL.md 的目錄，以及規則 10 定義的各平台入口檔
+（CLAUDE.md、.github/copilot-instructions.md、GEMINI.md、
+.cursor/rules/agents.mdc、.cursorrules）。
 
 結束碼與 deliverable-writing-audit 的偵測腳本一致：
     0  全部通過
@@ -59,9 +61,33 @@ RE_TOP_LEVEL_KEY = re.compile(r"^([A-Za-z][A-Za-z0-9_-]*)\s*:\s*(.*)$")
 RE_FENCE = re.compile(r"^\s*(?:```|~~~)")
 RE_INLINE_CODE = re.compile(r"`[^`]*`")
 
-# CLAUDE.md 的合法內容只有兩種行：一行 Markdown 標題，一行 `@AGENTS.md` 匯入指令。
-RE_CLAUDE_MD_TITLE = re.compile(r"^#\s+\S")
-RE_CLAUDE_MD_IMPORT = re.compile(r"^@AGENTS\.md\s*$")
+# 各平台入口檔（規則 10）。每個都是薄薄一層，只能把 agent 導向唯一正本 AGENTS.md。
+#
+#   rel_parts   入口檔相對專案根的路徑片段
+#   import_re   什麼算是對 AGENTS.md 的有效參照。Claude Code 只透過 `@AGENTS.md`
+#               匯入行載入規範，文字提及不會載入任何東西；其他平台只要有一行點名
+#               AGENTS.md 即可。
+#   frontmatter 檔首的 YAML 區塊是設定而非規範文字，是否略過
+RE_IMPORT_LINE = re.compile(r"^@AGENTS\.md\s*$")
+RE_MENTIONS_AGENTS = re.compile(r"AGENTS\.md")
+RE_HEADING = re.compile(r"^#{1,6}\s+\S")
+
+
+@dataclass(frozen=True)
+class PointerSpec:
+    label: str
+    rel_parts: tuple[str, ...]
+    import_re: re.Pattern
+    frontmatter: bool = False
+
+
+POINTER_SPECS = (
+    PointerSpec("Claude Code", ("CLAUDE.md",), RE_IMPORT_LINE),
+    PointerSpec("GitHub Copilot", (".github", "copilot-instructions.md"), RE_MENTIONS_AGENTS),
+    PointerSpec("Gemini CLI / Antigravity", ("GEMINI.md",), RE_MENTIONS_AGENTS),
+    PointerSpec("Cursor", (".cursor", "rules", "agents.mdc"), RE_MENTIONS_AGENTS, frontmatter=True),
+    PointerSpec("Cursor / Windsurf（舊式）", (".cursorrules",), RE_MENTIONS_AGENTS),
+)
 
 SEVERITY_ORDER = {"P0": 0, "P1": 1, "P2": 2}
 
@@ -259,52 +285,104 @@ def check_relative_links(skill_dir: Path, report: Report) -> None:
 
 # ---------------------------------------------------------------- Harness 檢查
 
-def check_claude_md(path: Path, report: Report) -> None:
-    """CLAUDE.md 只能有標題與 `@AGENTS.md` 參照，不得含任何規範內容。"""
+def pointer_root(path: Path, spec: PointerSpec) -> Path:
+    """由入口檔位置推得的專案根，例如 `.github/` 的上一層。"""
+    return path.parents[len(spec.rel_parts) - 1]
+
+
+def body_lines(text: str, has_frontmatter: bool) -> list[tuple[int, str]]:
+    """非空行的 (行號, 文字)，略過檔首的 YAML 設定區塊。"""
+    lines = text.splitlines()
+    start = 0
+    if has_frontmatter and lines and RE_FRONTMATTER_FENCE.match(lines[0]):
+        for idx in range(1, len(lines)):
+            if RE_FRONTMATTER_FENCE.match(lines[idx]):
+                start = idx + 1
+                break
+    return [(n, ln.strip()) for n, ln in enumerate(lines[start:], start=start + 1) if ln.strip()]
+
+
+def check_pointer(path: Path, spec: PointerSpec, report: Report) -> None:
+    """平台入口檔只能指向專案根的 AGENTS.md（規則 10）。
+
+    合法形式有兩種：解析後指向專案 AGENTS.md 的 symlink，或每一行都是標題或
+    AGENTS.md 參照的短檔案。其他內容等於另存一份規範，之後必然與正本分歧。
+    """
     report.entrypoints_scanned += 1
-    lines = [ln for ln in read_text(path).splitlines() if ln.strip()]
-    if not lines:
-        report.add("P1", "claude-md-empty", path, 1, "CLAUDE.md 是空的，應含標題與 `@AGENTS.md`")
+    name = "/".join(spec.rel_parts)
+    agents = pointer_root(path, spec) / "AGENTS.md"
+    agents_found = agents.exists()
+    if not agents_found:
+        report.add("P0", "agents-md-missing", path, 1,
+                   f"{name}（{spec.label}）所在的專案根沒有 AGENTS.md，參照指向不存在的正本")
+
+    if path.is_symlink():
+        if agents_found and path.resolve() != agents.resolve():
+            report.add("P0", "pointer-symlink-target", path, 1,
+                       f"{name}（{spec.label}）是 symlink，但解析結果不是 AGENTS.md")
         return
 
-    has_import = any(RE_CLAUDE_MD_IMPORT.match(ln) for ln in lines)
-    if not has_import:
-        report.add("P0", "claude-md-no-import", path, 1,
-                   "CLAUDE.md 缺少 `@AGENTS.md` 參照，規範不會被載入")
+    lines = body_lines(read_text(path), spec.frontmatter)
+    if not lines:
+        report.add("P1", "pointer-empty", path, 1,
+                   f"{name}（{spec.label}）是空的，應含對 AGENTS.md 的參照")
+        return
 
-    for lineno, raw in enumerate(read_text(path).splitlines(), start=1):
-        if not raw.strip():
-            continue
-        if RE_CLAUDE_MD_TITLE.match(raw) or RE_CLAUDE_MD_IMPORT.match(raw):
-            continue
-        report.add("P1", "claude-md-extra", path, lineno,
-                   f"CLAUDE.md 含參照以外的內容：{raw.strip()[:40]}")
+    if not any(spec.import_re.search(text) for _, text in lines):
+        want = "`@AGENTS.md` 匯入行" if spec.import_re is RE_IMPORT_LINE else "對 AGENTS.md 的參照"
+        report.add("P0", "pointer-no-reference", path, 1,
+                   f"{name}（{spec.label}）缺少{want}，規範不會被載入")
 
-    if not (path.parent / "AGENTS.md").exists():
-        report.add("P0", "agents-md-missing", path, 1,
-                   "同目錄下沒有 AGENTS.md，參照指向不存在的正本")
+    for lineno, text in lines:
+        if RE_HEADING.match(text) or spec.import_re.search(text):
+            continue
+        report.add("P1", "pointer-extra", path, lineno,
+                   f"{name}（{spec.label}）含參照以外的內容：{text[:40]}")
 
 
 # ---------------------------------------------------------------- 走訪與輸出
 
-def collect_targets(paths: list[Path]) -> tuple[list[Path], list[Path]]:
-    """找出所有 Skill 目錄與 CLAUDE.md。回傳的清單已去重且排序。"""
+def match_pointer(path: Path) -> PointerSpec | None:
+    """相對位置與 `path` 結尾相符的入口檔規格，沒有則回傳 None。"""
+    for spec in POINTER_SPECS:
+        if path.parts[-len(spec.rel_parts):] == spec.rel_parts:
+            return spec
+    return None
+
+
+def walk_named(root: Path, name: str):
+    """列出 `root` 底下所有名為 `name` 的檔案或 symlink，含失效的 symlink。
+
+    `Path.rglob` 會略過失效 symlink，而那正是入口檔最該回報的缺陷，
+    因此改用 `os.walk` 走訪。走訪時修剪版本控制與相依套件目錄，不遍歷無關的大型樹。
+    """
+    for dirpath, dirs, files in os.walk(root):
+        dirs[:] = [d for d in dirs if d not in {".git", "node_modules", ".venv", "venv", "__pycache__"}]
+        if name in files:
+            yield Path(dirpath) / name
+
+
+def collect_targets(paths: list[Path]) -> tuple[list[Path], list[tuple[Path, PointerSpec]]]:
+    """找出所有 Skill 目錄與各平台入口檔。回傳的清單已去重且排序。"""
     skill_dirs: set[Path] = set()
-    entrypoints: set[Path] = set()
+    entrypoints: dict[Path, PointerSpec] = {}
     for path in paths:
-        if path.is_file():
+        if path.is_file() or path.is_symlink():
             if path.name == "SKILL.md":
                 skill_dirs.add(path.parent)
-            elif path.name == "CLAUDE.md":
-                entrypoints.add(path)
+            elif (spec := match_pointer(path)) is not None:
+                entrypoints[path] = spec
             continue
         if (path / "SKILL.md").exists():
             skill_dirs.add(path)
         for found in path.rglob("SKILL.md"):
-            skill_dirs.add(found.parent)
-        for found in path.rglob("CLAUDE.md"):
-            entrypoints.add(found)
-    return sorted(skill_dirs), sorted(entrypoints)
+            if not any(p in {".git", "node_modules", ".venv", "venv", "__pycache__"} for p in found.parts):
+                skill_dirs.add(found.parent)
+        for spec in POINTER_SPECS:
+            for found in walk_named(path, spec.rel_parts[-1]):
+                if match_pointer(found) is spec:
+                    entrypoints[found] = spec
+    return sorted(skill_dirs), sorted(entrypoints.items())
 
 
 def render(report: Report) -> str:
@@ -351,8 +429,8 @@ def main(argv: list[str]) -> int:
     report = Report()
     for skill_dir in skill_dirs:
         check_skill(skill_dir, report)
-    for entrypoint in entrypoints:
-        check_claude_md(entrypoint, report)
+    for entrypoint, spec in entrypoints:
+        check_pointer(entrypoint, spec, report)
 
     if args.json:
         print(json.dumps(

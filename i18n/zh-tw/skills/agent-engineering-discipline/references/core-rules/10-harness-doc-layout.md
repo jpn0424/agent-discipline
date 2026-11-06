@@ -38,6 +38,8 @@
 
 `@AGENTS.md` 是 Claude Code 的匯入指令，載入時會把 `AGENTS.md` 的內容展開進 context。因此 `CLAUDE.md` 裡任何額外的規範文字都是第二份副本。若專案主要由其他 Agent（如 GitHub Copilot 或 Cursor）維護，則建立該平台的專屬入口參照檔指回 `AGENTS.md`，不強制建立未使用的平台入口。
 
+**symlink 是同樣合法的指針。** 平台入口檔若是解析後指向專案 `AGENTS.md` 的 symlink，就不存在會分歧的第二份副本，依構造即符合本規則。只在每個 checkout 環境都支援 symlink 時採用；Windows 未啟用 `core.symlinks` 時，Git 會把連結落地成只含目標路徑的純文字檔，平台讀到的就不是規範。`check_skill_spec.py` 兩種形式都接受，並回報解析結果不是 `AGENTS.md` 的 symlink、失效 symlink，以及夾帶規範文字、缺少 `AGENTS.md` 參照、或專案根沒有 `AGENTS.md` 的指針檔。
+
 > [!NOTE]
 > 本節具名特定工具是**刻意的**，不違反 [Core Rule 11](11-skill-and-agent-spec.md)。這一節的主題就是各工具入口檔的分工，檔名與匯入語法本身即規則內容，換成通用敘述反而無法執行。其他工具依各自的匯入語法照同一模式建立入口檔。
 
@@ -80,7 +82,7 @@
 | 內容 | 落點 |
 | --- | --- |
 | 工項與驗證截圖 | `docs/tasks/`、`docs/tasks/screenshots/` |
-| ADR 決策紀錄 | 專案約定之 ADR 路徑，如 `docs/decisions/`、`.agent/decisions.md` 或 `.claude/decisions.md` |
+| ADR 決策紀錄 | 專案約定之 ADR 路徑，如 `docs/decisions/` |
 | 需求、規格、研究報告、比較分析、整合報告 | `docs/` |
 | backlog、測試情境腳本、對話紀錄 | `docs/` |
 | 外部 repo 的程式碼或設定副本 | `references/` |
@@ -93,7 +95,7 @@
 #### Never
 
 - **改動 `references/` 的內容**：它是別人的正本，本專案只讀。需要變更就到來源 repo 處理，或在 `docs/` 建立工項說明落差。
-- **把 agent 執行用的正本放進 `docs/`**：那屬於平台或專案約定之技能目錄（如 `.agent/skills/`、`.claude/skills/` 或 `skills/`）。`docs/` 是給人與開發者 Agent 讀的紀錄，不是任務執行指令。
+- **把 agent 執行用的正本放進 `docs/`**：那屬於平台或專案約定之技能目錄（如 `.agents/skills/`、`.claude/skills/` 或 `skills/`）。`docs/` 是給人與開發者 Agent 讀的紀錄，不是任務執行指令。
 
 > [!IMPORTANT]
 > **`references/` 這個名字在兩個層級有不同語意，不要混用。** 專案根目錄的 `references/` 是上述的外部參照物；Skill 目錄內的 `references/`（`skills/<name>/references/`）是該 Skill 漸進揭露用的細節文件，屬 Skill 正本的一部分，規範見 [Core Rule 11](11-skill-and-agent-spec.md)。兩者都可能出現在同一個專案裡。

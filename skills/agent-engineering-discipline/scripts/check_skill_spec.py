@@ -11,7 +11,9 @@ Usage:
 
 <path> may be a single Skill directory, a container of multiple Skills, or a
 project root. The script recursively discovers all directories containing
-SKILL.md as well as all CLAUDE.md files.
+SKILL.md as well as every platform pointer file defined by Core Rule 10
+(CLAUDE.md, .github/copilot-instructions.md, GEMINI.md,
+.cursor/rules/agents.mdc, .cursorrules).
 
 Exit codes (aligned with deliverable-writing-audit/scripts/detect.py):
     0  All checks passed
@@ -58,9 +60,35 @@ RE_TOP_LEVEL_KEY = re.compile(r"^([A-Za-z][A-Za-z0-9_-]*)\s*:\s*(.*)$")
 RE_FENCE = re.compile(r"^\s*(?:```|~~~)")
 RE_INLINE_CODE = re.compile(r"`[^`]*`")
 
-# CLAUDE.md may contain only an H1 heading and an `@AGENTS.md` import directive.
-RE_CLAUDE_MD_TITLE = re.compile(r"^#\s+\S")
-RE_CLAUDE_MD_IMPORT = re.compile(r"^@AGENTS\.md\s*$")
+# Platform pointer files (Core Rule 10). Each is a thin entrypoint that must only
+# direct the agent to AGENTS.md, the single canonical source.
+#
+#   rel_parts   path of the pointer relative to the project root, as path parts
+#   import_re   what counts as a valid reference to AGENTS.md. Claude Code loads
+#               rules only through an `@AGENTS.md` import line, so a prose mention
+#               would silently load nothing; other platforms accept any line that
+#               names AGENTS.md.
+#   frontmatter whether a leading YAML block is configuration, not rule prose
+RE_IMPORT_LINE = re.compile(r"^@AGENTS\.md\s*$")
+RE_MENTIONS_AGENTS = re.compile(r"AGENTS\.md")
+RE_HEADING = re.compile(r"^#{1,6}\s+\S")
+
+
+@dataclass(frozen=True)
+class PointerSpec:
+    label: str
+    rel_parts: tuple[str, ...]
+    import_re: re.Pattern
+    frontmatter: bool = False
+
+
+POINTER_SPECS = (
+    PointerSpec("Claude Code", ("CLAUDE.md",), RE_IMPORT_LINE),
+    PointerSpec("GitHub Copilot", (".github", "copilot-instructions.md"), RE_MENTIONS_AGENTS),
+    PointerSpec("Gemini CLI / Antigravity", ("GEMINI.md",), RE_MENTIONS_AGENTS),
+    PointerSpec("Cursor", (".cursor", "rules", "agents.mdc"), RE_MENTIONS_AGENTS, frontmatter=True),
+    PointerSpec("Cursor / Windsurf (legacy)", (".cursorrules",), RE_MENTIONS_AGENTS),
+)
 
 SEVERITY_ORDER = {"P0": 0, "P1": 1, "P2": 2}
 
@@ -247,52 +275,106 @@ def check_relative_links(skill_dir: Path, report: Report) -> None:
 
 # ---------------------------------------------------------------- Harness Checks
 
-def check_claude_md(path: Path, report: Report) -> None:
-    """CLAUDE.md must contain only an H1 title and `@AGENTS.md` pointer."""
+def pointer_root(path: Path, spec: PointerSpec) -> Path:
+    """Project root implied by a pointer's location, e.g. the parent of `.github/`."""
+    return path.parents[len(spec.rel_parts) - 1]
+
+
+def body_lines(text: str, has_frontmatter: bool) -> list[tuple[int, str]]:
+    """Non-blank (line_number, text) pairs, skipping a leading YAML configuration block."""
+    lines = text.splitlines()
+    start = 0
+    if has_frontmatter and lines and RE_FRONTMATTER_FENCE.match(lines[0]):
+        for idx in range(1, len(lines)):
+            if RE_FRONTMATTER_FENCE.match(lines[idx]):
+                start = idx + 1
+                break
+    return [(n, ln.strip()) for n, ln in enumerate(lines[start:], start=start + 1) if ln.strip()]
+
+
+def check_pointer(path: Path, spec: PointerSpec, report: Report) -> None:
+    """A platform entrypoint must only point at the sibling AGENTS.md (Core Rule 10).
+
+    Valid forms: a symlink resolving to the project's AGENTS.md, or a short file
+    whose every line is a heading or a reference to AGENTS.md. Anything else is a
+    second copy of the rules that will drift from the canonical source.
+    """
     report.entrypoints_scanned += 1
-    lines = [ln for ln in read_text(path).splitlines() if ln.strip()]
-    if not lines:
-        report.add("P1", "claude-md-empty", path, 1, "CLAUDE.md is empty; expected title and `@AGENTS.md`")
+    name = "/".join(spec.rel_parts)
+    agents = pointer_root(path, spec) / "AGENTS.md"
+    agents_found = agents.exists()
+    if not agents_found:
+        report.add("P0", "agents-md-missing", path, 1,
+                   f"{name} ({spec.label}) has no AGENTS.md at the project root; the pointer cannot resolve")
+
+    if path.is_symlink():
+        if agents_found and path.resolve() != agents.resolve():
+            report.add("P0", "pointer-symlink-target", path, 1,
+                       f"{name} ({spec.label}) is a symlink that does not resolve to AGENTS.md")
         return
 
-    has_import = any(RE_CLAUDE_MD_IMPORT.match(ln) for ln in lines)
-    if not has_import:
-        report.add("P0", "claude-md-no-import", path, 1,
-                   "CLAUDE.md is missing `@AGENTS.md` import directive")
+    lines = body_lines(read_text(path), spec.frontmatter)
+    if not lines:
+        report.add("P1", "pointer-empty", path, 1,
+                   f"{name} ({spec.label}) is empty; expected a reference to AGENTS.md")
+        return
 
-    for lineno, raw in enumerate(read_text(path).splitlines(), start=1):
-        if not raw.strip():
-            continue
-        if RE_CLAUDE_MD_TITLE.match(raw) or RE_CLAUDE_MD_IMPORT.match(raw):
-            continue
-        report.add("P1", "claude-md-extra", path, lineno,
-                   f"CLAUDE.md contains prose beyond the pointer: {raw.strip()[:40]}")
+    if not any(spec.import_re.search(text) for _, text in lines):
+        want = "an `@AGENTS.md` import line" if spec.import_re is RE_IMPORT_LINE else "a reference to AGENTS.md"
+        report.add("P0", "pointer-no-reference", path, 1,
+                   f"{name} ({spec.label}) is missing {want}; the canonical rules are never loaded")
 
-    if not (path.parent / "AGENTS.md").exists():
-        report.add("P0", "agents-md-missing", path, 1,
-                   "Sibling AGENTS.md is missing; pointer cannot resolve")
+    for lineno, text in lines:
+        if RE_HEADING.match(text) or spec.import_re.search(text):
+            continue
+        report.add("P1", "pointer-extra", path, lineno,
+                   f"{name} ({spec.label}) contains prose beyond the pointer: {text[:40]}")
 
 
 # ---------------------------------------------------------------- Traversal & Output
 
-def collect_targets(paths: list[Path]) -> tuple[list[Path], list[Path]]:
-    """Collect all Skill directories and CLAUDE.md files, deduplicated and sorted."""
+def match_pointer(path: Path) -> PointerSpec | None:
+    """The pointer spec whose relative location matches the end of `path`, if any."""
+    for spec in POINTER_SPECS:
+        if path.parts[-len(spec.rel_parts):] == spec.rel_parts:
+            return spec
+    return None
+
+
+def collect_targets(paths: list[Path]) -> tuple[list[Path], list[tuple[Path, PointerSpec]]]:
+    """Collect all Skill directories and platform pointer files, deduplicated and sorted."""
     skill_dirs: set[Path] = set()
-    entrypoints: set[Path] = set()
+    entrypoints: dict[Path, PointerSpec] = {}
     for path in paths:
-        if path.is_file():
+        if path.is_file() or path.is_symlink():
             if path.name == "SKILL.md":
                 skill_dirs.add(path.parent)
-            elif path.name == "CLAUDE.md":
-                entrypoints.add(path)
+            elif (spec := match_pointer(path)) is not None:
+                entrypoints[path] = spec
             continue
         if (path / "SKILL.md").exists():
             skill_dirs.add(path)
         for found in path.rglob("SKILL.md"):
-            skill_dirs.add(found.parent)
-        for found in path.rglob("CLAUDE.md"):
-            entrypoints.add(found)
-    return sorted(skill_dirs), sorted(entrypoints)
+            if not any(p in {".git", "node_modules", ".venv", "venv", "__pycache__"} for p in found.parts):
+                skill_dirs.add(found.parent)
+        for spec in POINTER_SPECS:
+            for found in walk_named(path, spec.rel_parts[-1]):
+                if match_pointer(found) is spec:
+                    entrypoints[found] = spec
+    return sorted(skill_dirs), sorted(entrypoints.items())
+
+
+def walk_named(root: Path, name: str):
+    """Yield every file or symlink called `name` under `root`, including dangling symlinks.
+
+    `Path.rglob` skips dangling symlinks, which are exactly the pointer defects
+    worth reporting, so the walk is done with `os.walk`. Prunes version control
+    and dependency trees so unrelated large directories are not traversed.
+    """
+    for dirpath, dirs, files in os.walk(root):
+        dirs[:] = [d for d in dirs if d not in {".git", "node_modules", ".venv", "venv", "__pycache__"}]
+        if name in files:
+            yield Path(dirpath) / name
 
 
 def render(report: Report) -> str:
@@ -339,8 +421,8 @@ def main(argv: list[str]) -> int:
     report = Report()
     for skill_dir in skill_dirs:
         check_skill(skill_dir, report)
-    for entrypoint in entrypoints:
-        check_claude_md(entrypoint, report)
+    for entrypoint, spec in entrypoints:
+        check_pointer(entrypoint, spec, report)
 
     if args.json:
         print(json.dumps(

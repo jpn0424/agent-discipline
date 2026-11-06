@@ -111,7 +111,12 @@ RE_INTERNAL_HOST = re.compile(
     r"[^\s/]*\.[a-z]{2,}(?:\.[a-z]{2,})+"
 )
 RE_AI_SIGNATURE = re.compile(
-    r"(?:provide[d]?\s+by\s+claude|generated\s+with\s+\[?claude|co-authored-by:\s*claude|🤖)",
+    r"(?:"
+    r"provide[d]?\s+by\s+\[?(?:claude|gemini|chatgpt|copilot|codex|cursor|antigravity|openai|anthropic)"
+    r"|generated\s+(?:with|by)\s+\[?(?:claude|gemini|chatgpt|copilot|codex|cursor|antigravity|openai|anthropic)"
+    r"|co-authored-by:\s*(?:(?:github\s+)?copilot|claude|codex|cursor|gemini|antigravity)"
+    r"|🤖"
+    r")",
     re.IGNORECASE,
 )
 RE_UNVERIFIED = re.compile(
@@ -165,7 +170,7 @@ RE_EVIDENCE = re.compile(
     r"|\bverbatim\s+error\b|\berror\s+output\b|\bverified\b|\btested\b|\bscreenshot\b|\bevidence\b|\bHTTP\s+[45]\d\d\b",
     re.IGNORECASE,
 )
-RE_DEV_JARGON = re.compile(r"\.claude/|\.agents/|Harness|本機|本地開發|subagent|validator|AD-\d{3,}|HD-\d{3,}|TASK-\d{6,}")
+RE_DEV_JARGON = re.compile(r"\.claude/|\.agents?/|\.cursor/|\.windsurf/|\.github/copilot-instructions|CLAUDE\.md|GEMINI\.md|Harness|本機|本地開發|subagent|validator|AD-\d{3,}|HD-\d{3,}|TASK-\d{6,}")
 # 只抓粗體標籤形式。未加粗的開頭片段常是完整句子（「重新執行測試。若…」），
 # 而中文動詞偵測不可靠，無法用正則分出標籤與句子，因此收斂到誤判最低的強形式。
 RE_LABEL_PERIOD = re.compile(r"^\s*[-*+]\s+\*\*([^*。：:\n]{1,30})[。.]\*\*\s*\S")
@@ -177,7 +182,7 @@ RE_EMOJI = re.compile(
 # 表格狀態標記與清單標記屬結構化資訊，不計入 emoji 密度。
 STATUS_GLYPHS = set("✅⚠️❌✔️❎⛔️🔴🟠🟡".replace("️", "")) | {"✅", "⚠", "❌", "✔", "🔴", "🟠", "🟡"}
 
-VAGUE_WORDS = ["相關", "之類", "等等", "適當", "盡量", "某種", "某些", "一些", "大概", "基本上", "原則上"]
+VAGUE_WORDS_ZH = ["相關", "之類", "等等", "適當", "盡量", "某種", "某些", "一些", "大概", "基本上", "原則上"]
 RE_VAGUE_EN = re.compile(
     r"\betc\.|\band so on\b|\bappropriately\b|\bas much as possible\b|\bsome kind of\b|\broughly\b|\bbasically\b|\bin principle\b",
     re.IGNORECASE,
@@ -199,7 +204,7 @@ VAGUE_PER_KCHAR = 4.0   # 現行語料最高值的約 1.5 倍
 # {2,80}：下限 2 排除空括號與單字元符號；上限 80 之外的括號內容已是完整段落，
 # 屬「該寫成正文」而不是「括號補述」，改由 C2 該結構化卻寫成流水句判讀。
 RE_PAREN = re.compile(r"(?<!\])[（(]([^（()）]{2,100})[)）]")
-PAREN_GLOSS_HINT = re.compile(r"因為|所以|其實|亦即|也就是|原本|之前|曾經|已棄用|為了|避免|例如|注意|不是|舊的|導致|以免|意思是")
+PAREN_GLOSS_HINT_ZH = re.compile(r"因為|所以|其實|亦即|也就是|原本|之前|曾經|已棄用|為了|避免|例如|注意|不是|舊的|導致|以免|意思是")
 PAREN_GLOSS_HINT_EN = re.compile(
     r"\b(?:because|since|therefore|i\.e\.|that is|namely|originally|previously|formerly|deprecated|in order to|to avoid|for example|e\.g\.|note that|meaning that|used to|which we)\b",
     re.IGNORECASE,
@@ -246,7 +251,7 @@ def guess_profile(path: Path) -> str:
     """依路徑推斷交付情境。
 
     刻意不把 `skills/` 一律判成 `agent-facing`：路徑看不出這個 Skill 的讀者是
-    業務 agent 還是開發者。談開發工作流的 Skill，`Harness`、`.claude/`、`本機`
+    業務 agent 還是開發者。談開發工作流的 Skill，`Harness`、各平台設定目錄、`本機`
     正是它的主題而非雜訊。需要 `agent-facing` 的加嚴時以 `--profile` 明指。
     """
     p = "/" + str(path).replace("\\", "/").lstrip("./")
@@ -306,7 +311,7 @@ def scan_file(path: Path, terms: list[str]) -> list[Hit]:
         for m in RE_PAREN.finditer(masked):
             inner = m.group(1)
             if re.search(r"[一-鿿]", inner):
-                borderline = not PAREN_GLOSS_HINT.search(inner)
+                borderline = not PAREN_GLOSS_HINT_ZH.search(inner)
                 if borderline and len(inner) <= 8:
                     continue
                 hits.append(Hit("paren-gloss", lineno, raw[m.start():m.end()], borderline=borderline))
@@ -353,7 +358,7 @@ def scan_file(path: Path, terms: list[str]) -> list[Hit]:
             )
 
     vague_total = sum(
-        sum(masked.count(w) for w in VAGUE_WORDS) + len(RE_VAGUE_EN.findall(masked))
+        sum(masked.count(w) for w in VAGUE_WORDS_ZH) + len(RE_VAGUE_EN.findall(masked))
         for _, _, masked, _ in lines
     )
     if vague_total:
@@ -363,7 +368,7 @@ def scan_file(path: Path, terms: list[str]) -> list[Hit]:
                 (
                     lineno
                     for lineno, _, masked, _ in lines
-                    if any(w in masked for w in VAGUE_WORDS) or RE_VAGUE_EN.search(masked)
+                    if any(w in masked for w in VAGUE_WORDS_ZH) or RE_VAGUE_EN.search(masked)
                 ),
                 1,
             )
@@ -427,10 +432,11 @@ def apply_strictness(hits: list[Hit], profile: str) -> list[Hit]:
 
 def collect_files(paths: list[str]) -> list[Path]:
     out: list[Path] = []
+    ignored = {".git", "node_modules", ".venv", "venv", "__pycache__"}
     for p in paths:
         path = Path(p)
         if path.is_dir():
-            out.extend(sorted(q for q in path.rglob("*.md") if ".git" not in q.parts))
+            out.extend(sorted(q for q in path.rglob("*.md") if not any(x in q.parts for x in ignored)))
         elif path.is_file():
             out.append(path)
         else:

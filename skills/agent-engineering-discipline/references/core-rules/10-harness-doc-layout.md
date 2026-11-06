@@ -38,6 +38,8 @@ Taking Claude Code as an example, the complete content of `CLAUDE.md` must be th
 
 `@AGENTS.md` is Claude Code's native import directive, which expands `AGENTS.md` into context at load time. Any additional prose placed in `CLAUDE.md` creates a redundant second source of truth. If a project is primarily driven by another agent (such as GitHub Copilot or Cursor), create the platform-specific pointer file pointing to `AGENTS.md`; creating unused entrypoint files is not required.
 
+**A symlink is an equally valid pointer.** A platform entrypoint that is a symlink resolving to the project's `AGENTS.md` has no second copy that could drift, so it satisfies this rule by construction. Use it only where every checkout environment supports symlinks; on Windows without `core.symlinks` enabled, Git writes the link out as a plain text file holding the target path, and the platform then loads nothing useful. `check_skill_spec.py` accepts both forms, and reports a symlink that resolves anywhere other than `AGENTS.md`, a dangling symlink, and any pointer file that carries rule prose, lacks a reference to `AGENTS.md`, or has no `AGENTS.md` at the project root.
+
 > [!NOTE]
 > Naming specific agent files here is **intentional** and does not violate [Core Rule 11](11-skill-and-agent-spec.md). Because this section defines the exact entrypoint filenames and import syntax across agent platforms, replacing them with generic placeholders would make the rule unexecutable.
 
@@ -80,7 +82,7 @@ Highlight critical preconditions using `> [!IMPORTANT]` or `> [!NOTE]` callouts 
 | Content Type | Target Directory |
 | --- | --- |
 | Work items and verification screenshots | `docs/tasks/`, `docs/tasks/screenshots/` |
-| Architecture Decision Records (ADRs) | Project-convention ADR path, such as `docs/decisions/`, `.agent/decisions.md`, or `.claude/decisions.md` |
+| Architecture Decision Records (ADRs) | Project-convention ADR path, such as `docs/decisions/` |
 | Requirements, specifications, research reports, comparative analyses, integration reports | `docs/` |
 | Backlogs, test scenario scripts, session transcripts | `docs/` |
 | Snapshots of external repository code or configuration | `references/` |
@@ -93,7 +95,7 @@ Highlight critical preconditions using `> [!IMPORTANT]` or `> [!NOTE]` callouts 
 #### Never
 
 - **Never modify files under root `references/`**: They belong to upstream sources and are read-only in this workspace. If an upstream contract changes, update it in the source repository or log a work item under `docs/tasks/` documenting the discrepancy.
-- **Never place runtime agent skills inside `docs/`**: Runtime skills belong in platform-convention skill directories (such as `.agent/skills/`, `.claude/skills/`, or `skills/`). `docs/` holds human and developer records, not runtime instructions.
+- **Never place runtime agent skills inside `docs/`**: Runtime skills belong in platform-convention skill directories (such as `.agents/skills/`, `.claude/skills/`, or `skills/`). `docs/` holds human and developer records, not runtime instructions.
 
 > [!IMPORTANT]
 > **The directory name `references/` carries different semantics at two levels—never conflate them.** Root-level `<repo>/references/` holds read-only external snapshots as defined above; skill-level `skills/<name>/references/` holds the progressively disclosed rule files that belong to that Skill's own canonical source, governed by [Core Rule 11](11-skill-and-agent-spec.md). Both can coexist in the same repository.

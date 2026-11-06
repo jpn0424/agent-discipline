@@ -80,7 +80,7 @@ description: "處理一件開發任務的治理紀律：改檔前先建立工項
 存放於 [assets/](assets/) 目錄，提供任務產出物之標準結構：
 
 - **建立工項**：複製 [task-template.md](assets/task-template.md) 至 `docs/tasks/TASK-YYYYMMDD-HHMMSS-<rr>-<slug>.md`，動手改檔前界定範圍、限制與可檢驗的驗收條件。取號指令：`python3 -c "import time,secrets; print(time.strftime('TASK-%Y%m%d-%H%M%S-') + secrets.token_hex(1))"`。
-- **架構決策紀錄**：複製 [decision-template.md](assets/decision-template.md) 至 `docs/decisions/decisions.md`（或專案約定之決策檔如 `.agent/decisions.md`、`.claude/decisions.md`），記錄涉及架構、相容性或外部影響的決策。
+- **架構決策紀錄**：複製 [decision-template.md](assets/decision-template.md) 至 `docs/decisions/decisions.md`（或專案約定之決策檔），記錄涉及架構、相容性或外部影響的決策。
 - **專案 Harness 正本**：複製 [agents-template.md](assets/agents-template.md) 至專案根目錄並命名為 `AGENTS.md`，版式遵循 [Core Rule 10](references/core-rules/10-harness-doc-layout.md)，依專案特性填寫定位與自訂規則。
 
 ## 結構檢查 (Structure Check)
@@ -92,4 +92,4 @@ python3 scripts/check_skill_spec.py <專案路徑>
 # 選項：--json 輸出結構化結果
 ```
 
-無外部依賴，Python 3 標準庫即可。結束碼 `0` 表示通過、`1` 表示有缺陷、`2` 表示執行錯誤。檢查確定性的結構事實：frontmatter 完整性、`name` 命名、禁止角括號標籤、目錄內不得放 README.md、目錄內不得包含符號連結、子目錄無多餘 frontmatter、相對連結有效性，以及平台入口檔（如 `CLAUDE.md`）僅限標題與 `@AGENTS.md` 參照。
+無外部依賴，Python 3 標準庫即可。結束碼 `0` 表示通過、`1` 表示有缺陷、`2` 表示執行錯誤。檢查確定性的結構事實：frontmatter 完整性、`name` 命名、禁止角括號標籤、目錄內不得放 README.md、目錄內不得包含符號連結、子目錄無多餘 frontmatter、相對連結有效性，以及規則 10 定義的每個平台入口檔都只能指向 `AGENTS.md`（短參照檔或指向它的 symlink 皆可）。

@@ -19,15 +19,23 @@ AI Agent 的工程開發紀律與交付文字品質套件。一個目錄一個 S
 
 ## 安裝
 
-在**目標專案的根目錄**執行：
+在**目標專案的根目錄**執行（範例以 `claude-code` 為主，可替換為下方表格中團隊使用的 Agent，如 `cursor` 或 `codex`）：
 
 ```bash
 npx skills add jpn0424/agent-discipline/i18n/zh-tw --agent claude-code --copy -y
 ```
 
-三個旗標的作用：`--agent claude-code` 限定只裝給 Claude Code，不去動 `.junie/`、`.cursor/` 等其他 Agent 的目錄；`--copy` 讓 `.claude/skills/` 內是實體檔案而非指向 `.agents/` 的 symlink，避免 `.agents/` 未一起提交時變成死連結；`-y` 略過互動提示。
+各 Agent 從自己的專案目錄讀取 Skill，因此 `--agent` 決定檔案放在哪裡：
 
-若需安裝預設英文版規範，直接省略子路徑（或指名 `i18n/en`）：
+| Agent | `--agent` 值 | 專案 Skills 目錄 |
+| :--- | :--- | :--- |
+| Claude Code | `claude-code` | `.claude/skills/` |
+| Codex、Cursor、Gemini CLI、GitHub Copilot、OpenCode、Antigravity | `codex`、`cursor`、`gemini-cli`、`github-copilot`、`opencode`、`antigravity` | `.agents/skills/` |
+| Windsurf | `windsurf` | `.windsurf/skills/` |
+
+表中列的是多數團隊會問到的 Agent，依 `skills` 1.5.x 的支援清單；CLI 支援的 Agent 更多，選項可用 `npx skills add --help` 查看。三個旗標的作用：`--agent` 限定只裝給指名的 Agent；`--copy` 讓各 Agent 的目錄內是實體檔案而非指向共用副本的 symlink，避免共用副本未一起提交時變成死連結；`-y` 略過互動提示。
+
+若需安裝英文版規範（套件根目錄的預設版本），直接省略子路徑：
 
 ```bash
 npx skills add jpn0424/agent-discipline --agent claude-code --copy -y
@@ -35,13 +43,13 @@ npx skills add jpn0424/agent-discipline --agent claude-code --copy -y
 
 ## 安裝後如何初次使用
 
-1. **讓 Claude Code 認得它**：若安裝前該專案尚無 `.claude/skills/` 目錄，需重新啟動 Claude Code，新目錄才會被監看；若原本就存在則即時生效。
-2. **確認已載入**：輸入 `/`，選單中應出現兩個 Skill 的名字。
+1. **讓 Agent 認得它**：安裝後在 Agent 中開新的工作階段。Claude Code 另有一項：若安裝前該專案尚無 `.claude/skills/` 目錄，需重新啟動一次，新目錄才會被監看；若原本就存在則即時生效。
+2. **確認已載入**：請 Agent 列出它可用的 Skill，應出現兩個 Skill 的名字。在 Claude Code 也可以輸入 `/`，從選單中找這兩個名字。
 3. **開始使用**，兩種觸發方式：
-   - **自動**：請求命中它的描述情境時，Claude 會自行載入並套用規範。
-   - **手動**：直接輸入 `/agent-engineering-discipline` 或 `/deliverable-writing-audit`。
+   - **自動**：請求命中它的描述情境時，Agent 會自行載入並套用規範。
+   - **手動**：以名稱直接呼叫 `agent-engineering-discipline` 或 `deliverable-writing-audit`；在 Claude Code 為 `/agent-engineering-discipline`、`/deliverable-writing-audit`。
 
-載入後 `SKILL.md` 的內容會進入對話並在整個工作階段持續生效；其中引用的 `references/`、`assets/` 子文件由 Claude 依需要再讀取，不會一次全部佔用 context。
+載入後 `SKILL.md` 的內容會進入對話並在整個工作階段持續生效；其中引用的 `references/`、`assets/` 子文件由 Agent 依需要再讀取，不會一次全部佔用 context。
 
 ## 怎麼驗證它有效
 
@@ -118,36 +126,36 @@ python3 skills/deliverable-writing-audit/scripts/detect.py <檔案或目錄>
 
 ```
 agent-discipline/
-├── README.md                                   # 本說明文件（繁體中文預設門面）
+├── README.md                                   # 英文門面（預設）
 ├── LICENSE                                     # MIT 開源授權
-├── CONTRIBUTING.md                             # 貢獻與治理指南
-├── skills/                                     # 預設繁體中文版 Skills
+├── CONTRIBUTING.md                             # 英文貢獻與治理指南
+├── skills/                                     # 英文版 Skills（預設版本）
 │   ├── agent-engineering-discipline/
-│   │   ├── SKILL.md                            # 主入口：規則導覽、任務階段對照、腳本用法
-│   │   ├── references/
-│   │   │   ├── core-rules/                     # 11 條核心約束規範
-│   │   │   └── methods/                        # 2 份執行方法的校準
-│   │   ├── assets/                             # 治理範本：agents-template.md, task-template.md, decision-template.md
-│   │   └── scripts/check_skill_spec.py         # 無依賴結構檢查，驗 frontmatter 與連結
 │   └── deliverable-writing-audit/
-│       ├── SKILL.md                            # 主入口：稽核步驟、模式、分級、輸出格式
-│       ├── references/
-│       │   ├── pattern-catalog.md              # 28 條徵狀：徵狀、理由、修法、例外、證據、偵測
-│       │   ├── profile-matrix.md               # 各徵狀在六種交付情境下的寬容度
-│       │   ├── category-map.md                 # 哪些徵狀由腳本偵測、哪些由判讀
-│       │   └── methodology-grounding.md        # 徵狀與既有理論框架的對照
-│       └── scripts/detect.py                   # 無依賴偵測腳本
 └── i18n/
-    └── en/                                     # 英文版完整鏡像（結構與根目錄完全對稱）
-        ├── README.md
-        ├── CONTRIBUTING.md
+    └── zh-tw/                                  # 繁體中文版完整鏡像（本文件所在，結構與根目錄完全對稱）
+        ├── README.md                           # 本說明文件
+        ├── CONTRIBUTING.md                     # 繁體中文貢獻指南
         └── skills/
             ├── agent-engineering-discipline/
+            │   ├── SKILL.md                    # 主入口：規則導覽、任務階段對照、腳本用法
+            │   ├── references/
+            │   │   ├── core-rules/             # 11 條核心約束規範
+            │   │   └── methods/                # 2 份執行方法的校準
+            │   ├── assets/                     # 治理範本：agents-template.md, task-template.md, decision-template.md
+            │   └── scripts/check_skill_spec.py # 無依賴結構檢查，驗 frontmatter、連結與各平台入口檔
             └── deliverable-writing-audit/
+                ├── SKILL.md                    # 主入口：稽核步驟、模式、分級、輸出格式
+                ├── references/
+                │   ├── pattern-catalog.md      # 28 條徵狀：徵狀、理由、修法、例外、證據、偵測
+                │   ├── profile-matrix.md       # 各徵狀在六種交付情境下的寬容度
+                │   ├── category-map.md         # 哪些徵狀由腳本偵測、哪些由判讀
+                │   └── methodology-grounding.md# 徵狀與既有理論框架的對照
+                └── scripts/detect.py           # 無依賴偵測腳本
 ```
 
 ## 貢獻與授權
 
 - 歡迎提出 Issue。Pull Request 視為提案，採納後隨下一個版本發布，處理方式見 [CONTRIBUTING.md](CONTRIBUTING.md)。
-- 本專案採用 [MIT License](LICENSE) 釋出。
+- 本專案採用 [MIT License](../../LICENSE) 釋出。
 

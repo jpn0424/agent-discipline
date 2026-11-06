@@ -17,13 +17,21 @@ The former governs agent behavior before and after touching files; the latter au
 
 ## Installation
 
-Run the following command at the **root of your target repository**:
+Run the following command at the **root of your target repository** (the example targets `claude-code`; replace it with your agent from the table below, such as `cursor` or `codex`):
 
 ```bash
 npx skills add jpn0424/agent-discipline --agent claude-code --copy -y
 ```
 
-Purpose of the three flags: `--agent claude-code` restricts installation to Claude Code without creating `.junie/` or `.cursor/` directories; `--copy` writes real files into `.claude/skills/` instead of symlinking to `.agents/`, preventing broken links if `.agents/` is not committed; `-y` skips interactive prompts.
+Each agent reads Skills from its own project directory, so `--agent` decides where the files land:
+
+| Agent | `--agent` value | Project Skills directory |
+| :--- | :--- | :--- |
+| Claude Code | `claude-code` | `.claude/skills/` |
+| Codex, Cursor, Gemini CLI, GitHub Copilot, OpenCode, Antigravity | `codex`, `cursor`, `gemini-cli`, `github-copilot`, `opencode`, `antigravity` | `.agents/skills/` |
+| Windsurf | `windsurf` | `.windsurf/skills/` |
+
+The table lists the agents most teams ask about, following the supported-agents table of `skills` 1.5.x; the CLI supports many more, and `npx skills add --help` shows the options. Purpose of the three flags: `--agent` restricts installation to the agents you name; `--copy` writes real files into each agent's directory instead of symlinking to a shared copy, preventing broken links if that shared copy is not committed; `-y` skips interactive prompts.
 
 For the Traditional Chinese edition (`i18n/zh-tw`), append the subpath:
 
@@ -33,11 +41,11 @@ npx skills add jpn0424/agent-discipline/i18n/zh-tw --agent claude-code --copy -y
 
 ## First-Time Usage After Installation
 
-1. **Let Claude Code discover the Skills**: If `.claude/skills/` did not exist in the project before installation, restart Claude Code once so it watches the new directory; if the directory already existed, discovery is immediate.
-2. **Confirm loading**: Type `/` in the prompt; both Skill names should appear in the command menu.
+1. **Let your agent discover the Skills**: Start a new session in your agent after installing. Claude Code additionally needs one restart if `.claude/skills/` did not exist in the project before installation, so it starts watching the new directory; if the directory already existed, discovery is immediate.
+2. **Confirm loading**: Ask the agent to list the Skills it has available; both Skill names should appear. In Claude Code you can also type `/` in the prompt and look for them in the command menu.
 3. **Triggering**, either way:
-   - **Automatic**: When your request matches the scenarios in a Skill's `description`, Claude loads and applies the specification automatically.
-   - **Manual**: Invoke `/agent-engineering-discipline` or `/deliverable-writing-audit` directly.
+   - **Automatic**: When your request matches the scenarios in a Skill's `description`, the agent loads and applies the specification automatically.
+   - **Manual**: Invoke `agent-engineering-discipline` or `deliverable-writing-audit` by name; in Claude Code, `/agent-engineering-discipline` or `/deliverable-writing-audit`.
 
 Once loaded, `SKILL.md` stays active for the session, while deep files under `references/` and `assets/` are loaded on demand so they do not flood the context window upfront.
 
@@ -116,35 +124,33 @@ The suite's governance architecture draws a strict line between **non-negotiable
 
 ```
 agent-discipline/
-├── README.md                                   # Suite documentation (Traditional Chinese, default)
+├── README.md                                   # Suite documentation (English, this file)
 ├── LICENSE                                     # MIT License
 ├── CONTRIBUTING.md                             # Contribution and governance guide
-├── skills/                                     # Default Traditional Chinese Skills
+├── skills/                                     # English Skills (default edition)
 │   ├── agent-engineering-discipline/
+│   │   ├── SKILL.md                            # Main entrypoint: rule routing, action table, CLI usage
+│   │   ├── references/
+│   │   │   ├── core-rules/                     # 11 core engineering rules
+│   │   │   └── methods/                        # 2 calibrated execution method deltas
+│   │   ├── assets/                             # Governance templates: agents-template.md, task-template.md, decision-template.md
+│   │   └── scripts/check_skill_spec.py         # Zero-dependency structural & link checker
 │   └── deliverable-writing-audit/
+│       ├── SKILL.md                            # Main entrypoint: 6 audit steps, modes, severity, output format
+│       ├── references/
+│       │   ├── pattern-catalog.md              # 28 writing symptoms: symptom, why, fix, exceptions, evidence, detection
+│       │   ├── profile-matrix.md               # Tolerance levels across 6 delivery profiles
+│       │   ├── category-map.md                 # Mechanical script types vs. semantic judgement mapping
+│       │   └── methodology-grounding.md        # Post-hoc mapping to 5 theoretical pillars
+│       └── scripts/detect.py                   # Zero-dependency writing symptom detector
 └── i18n/
-    └── en/                                     # Complete English Suite Mirror
-        ├── README.md                           # English suite documentation (this file)
-        ├── CONTRIBUTING.md                     # English contribution guide
-        └── skills/
-            ├── agent-engineering-discipline/
-            │   ├── SKILL.md                    # Main entrypoint: rule routing, action table, CLI usage
-            │   ├── references/
-            │   │   ├── core-rules/             # 11 core engineering rules
-            │   │   └── methods/                # 2 calibrated execution method deltas
-            │   ├── assets/                     # Governance templates: agents-template.md, task-template.md, decision-template.md
-            │   └── scripts/check_skill_spec.py # Zero-dependency structural & link checker
-            └── deliverable-writing-audit/
-                ├── SKILL.md                    # Main entrypoint: 6 audit steps, modes, severity, output format
-                ├── references/
-                │   ├── pattern-catalog.md      # 28 writing symptoms: symptom, why, fix, exceptions, evidence, detection
-                │   ├── profile-matrix.md       # Tolerance levels across 6 delivery profiles
-                │   ├── category-map.md         # Mechanical script types vs. semantic judgement mapping
-                │   └── methodology-grounding.md# Post-hoc mapping to 5 theoretical pillars
-                └── scripts/detect.py           # Zero-dependency writing symptom detector
+    └── zh-tw/                                  # Complete Traditional Chinese mirror
+        ├── README.md                           # Traditional Chinese suite documentation
+        ├── CONTRIBUTING.md                     # Traditional Chinese contribution guide
+        └── skills/                             # Same structure as skills/ above
 ```
 
 ## Contributing and License
 
 - Issues are welcome. Pull requests are treated as proposals and published from the upstream monorepo in the next tagged release; see [CONTRIBUTING.md](CONTRIBUTING.md).
-- Released under the [MIT License](../../LICENSE).
+- Released under the [MIT License](LICENSE).

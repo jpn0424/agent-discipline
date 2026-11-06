@@ -19,7 +19,7 @@ Symptoms not listed below apply at `Strict` tolerance across all profiles.
 | Residual unverified status | **Extra-strict** | **Extra-strict** | **Extra-strict** | **Extra-strict** | Relaxed | Skip |
 | Unevidenced capability limitation claim | Strict | **Extra-strict** | **Extra-strict** | Strict | Relaxed | Skip |
 | Revived retired terminology | Strict | **Extra-strict** | **Extra-strict** | Relaxed (may explain why retired) | Skip | Relaxed |
-| Developer jargon (`.claude/`, `Harness`, local path aliases) | Skip | Strict | **Extra-strict** | Skip | Relaxed | Strict |
+| Developer jargon (platform config directories such as `.claude/` or `.agents/`, `Harness`, local path aliases) | Skip | Strict | **Extra-strict** | Skip | Relaxed | Strict |
 | Emoji density | Relaxed | Relaxed | Strict | Skip | Skip | Strict |
 | Excessive domain implementation detail | Skip | Skip | Skip | Skip | Relaxed | **Extra-strict** (PRs must stay accessible) |
 | Scattered duplicate rules | **Extra-strict** | **Extra-strict** | Strict | Skip | Skip | Skip |

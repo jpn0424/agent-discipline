@@ -80,7 +80,7 @@ Declare the execution method in the work item based on the nature of the task; w
 Located under [assets/](assets/), providing canonical structures for task deliverables:
 
 - **Creating a Work Item**: Copy [task-template.md](assets/task-template.md) to `docs/tasks/TASK-YYYYMMDD-HHMMSS-<rr>-<slug>.md` to bound scope, constraints, and verifiable acceptance criteria before modifying files. Generate the ID via `python3 -c "import time,secrets; print(time.strftime('TASK-%Y%m%d-%H%M%S-') + secrets.token_hex(1))"`.
-- **Architecture Decision Records**: Copy [decision-template.md](assets/decision-template.md) to `docs/decisions/decisions.md` (or the project's designated ADR file such as `.agent/decisions.md` or `.claude/decisions.md`) to record decisions affecting architecture, compatibility, or external contracts.
+- **Architecture Decision Records**: Copy [decision-template.md](assets/decision-template.md) to `docs/decisions/decisions.md` (or the project's designated ADR file) to record decisions affecting architecture, compatibility, or external contracts.
 - **Project Harness Source of Truth**: Copy [agents-template.md](assets/agents-template.md) to the project root as `AGENTS.md`, following the layout in [Core Rule 10](references/core-rules/10-harness-doc-layout.md) to fill in project positioning and custom rules.
 
 ## Structure Check
@@ -92,4 +92,4 @@ python3 scripts/check_skill_spec.py <project-path>
 # Option: --json outputs structured JSON results
 ```
 
-Requires only the Python 3 standard library with no external dependencies. Exit code `0` indicates all checks passed, `1` indicates structural defects, and `2` indicates an execution error. Validates deterministic structural invariants: YAML frontmatter completeness, `name` formatting, absence of angle-bracket tags, absence of `README.md` or symbolic links inside a Skill directory, absence of frontmatter in subdirectory files, relative link resolution, and platform pointer integrity (such as `CLAUDE.md` with `@AGENTS.md` only).
+Requires only the Python 3 standard library with no external dependencies. Exit code `0` indicates all checks passed, `1` indicates structural defects, and `2` indicates an execution error. Validates deterministic structural invariants: YAML frontmatter completeness, `name` formatting, absence of angle-bracket tags, absence of `README.md` or symbolic links inside a Skill directory, absence of frontmatter in subdirectory files, relative link resolution, and platform pointer integrity for every entrypoint defined in Core Rule 10 (each must only point to `AGENTS.md`, either as a short reference file or as a symlink to it).

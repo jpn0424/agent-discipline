@@ -48,7 +48,7 @@
 
 ### A2. AI 署名
 
-**徵狀**：交付內容、commit message、PR 內容出現 `provide by Claude`、`Generated with Claude`、`Co-Authored-By: Claude`、`🤖 Generated with`。
+**徵狀**：交付內容、commit message、PR 內容出現 `provide by Claude`、`Generated with Claude`、`Generated with Gemini`、`Co-Authored-By: GitHub Copilot`、`🤖 Generated with` 等平台 AI 署名。
 
 **為什麼**：交付物與公司內部溝通紀錄不應標示產生工具。
 
@@ -300,7 +300,7 @@
 
 ### C7. 開發者術語滲入交付物
 
-**徵狀**：交付給最終使用者或 agent 執行用的內容夾帶開發者維運訊息——決策編號（`AD-00xx`、`HD-00xx`）、工項編號（`TASK-…`）、同步狀態、`.claude/`、`Harness`、本機環境代稱、內部工具鏈名稱。
+**徵狀**：交付給最終使用者或 agent 執行用的內容夾帶開發者維運訊息——決策編號（`AD-00xx`、`HD-00xx`）、工項編號（`TASK-…`）、同步狀態、`.claude/`、`.agents/`、`Harness`、本機環境代稱、內部工具鏈名稱。
 
 **為什麼**：產出物的讀者沒有這些上下文。對 agent 而言這些是雜訊，會稀釋它真正需要的業務知識與護欄。
 

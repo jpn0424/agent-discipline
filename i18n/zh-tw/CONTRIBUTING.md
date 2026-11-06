@@ -55,7 +55,7 @@
 
 ### 4. 本地驗證
 
-在提交前，執行內建的兩項檢查：
+在提交前，於 `i18n/zh-tw` 根目錄（檢查英文版則在套件根目錄）執行內建的兩項檢查：
 
 ```bash
 python3 skills/agent-engineering-discipline/scripts/check_skill_spec.py .
@@ -72,4 +72,4 @@ python3 skills/deliverable-writing-audit/scripts/detect.py .
 
 ## 授權
 
-凡向本專案提交之貢獻，均視為同意以 [MIT License](LICENSE) 釋出。
+凡向本專案提交之貢獻，均視為同意以 [MIT License](../../LICENSE) 釋出。

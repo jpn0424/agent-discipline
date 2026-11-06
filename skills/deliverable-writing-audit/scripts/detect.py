@@ -114,7 +114,12 @@ RE_INTERNAL_HOST = re.compile(
     r"[^\s/]*\.[a-z]{2,}(?:\.[a-z]{2,})+"
 )
 RE_AI_SIGNATURE = re.compile(
-    r"(?:provide[d]?\s+by\s+claude|generated\s+with\s+\[?claude|co-authored-by:\s*claude|🤖)",
+    r"(?:"
+    r"provide[d]?\s+by\s+\[?(?:claude|gemini|chatgpt|copilot|codex|cursor|antigravity|openai|anthropic)"
+    r"|generated\s+(?:with|by)\s+\[?(?:claude|gemini|chatgpt|copilot|codex|cursor|antigravity|openai|anthropic)"
+    r"|co-authored-by:\s*(?:(?:github\s+)?copilot|claude|codex|cursor|gemini|antigravity)"
+    r"|🤖"
+    r")",
     re.IGNORECASE,
 )
 # Attributive `unverified <noun>` (e.g. "unverified work", "unverified claim") is
@@ -172,7 +177,7 @@ RE_EVIDENCE = re.compile(
     r"|\bverbatim\s+error\b|\berror\s+output\b|\bverified\b|\btested\b|\bscreenshot\b|\bevidence\b|\bHTTP\s+[45]\d\d\b",
     re.IGNORECASE,
 )
-RE_DEV_JARGON = re.compile(r"\.claude/|\.agents/|Harness|本機|本地開發|subagent|validator|AD-\d{3,}|HD-\d{3,}|TASK-\d{6,}")
+RE_DEV_JARGON = re.compile(r"\.claude/|\.agents?/|\.cursor/|\.windsurf/|\.github/copilot-instructions|CLAUDE\.md|GEMINI\.md|Harness|本機|本地開發|subagent|validator|AD-\d{3,}|HD-\d{3,}|TASK-\d{6,}")
 # Matches only bold list labels ending in a period. Unbolded list openings are
 # frequently complete imperative sentences ("- Run the test suite. If it fails..."),
 # which cannot be separated from noun labels in regex without a POS parser.
@@ -249,7 +254,7 @@ def guess_profile(path: Path) -> str:
 
     Deliberately does not force `skills/` to `agent-facing`: file paths alone
     cannot tell whether a Skill targets business agents or developers. For
-    engineering governance Skills, `Harness`, `.claude/`, and local paths are
+    engineering governance Skills, `Harness`, platform config directories, and local paths are
     the subject matter rather than noise. Pass `--profile agent-facing`
     explicitly when auditing business-agent Skills.
     """
@@ -428,10 +433,11 @@ def apply_strictness(hits: list[Hit], profile: str) -> list[Hit]:
 
 def collect_files(paths: list[str]) -> list[Path]:
     out: list[Path] = []
+    ignored = {".git", "node_modules", ".venv", "venv", "__pycache__"}
     for p in paths:
         path = Path(p)
         if path.is_dir():
-            out.extend(sorted(q for q in path.rglob("*.md") if ".git" not in q.parts))
+            out.extend(sorted(q for q in path.rglob("*.md") if not any(x in q.parts for x in ignored)))
         elif path.is_file():
             out.append(path)
         else:

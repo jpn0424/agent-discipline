@@ -40,7 +40,7 @@ description: "稽核並改寫交付文件的書寫徵狀。以徵狀目錄比對
 
 第六步只有 `rewrite` 與 `edit` 需要，理由是**改寫者是最容易犯本目錄徵狀的人**。機械偵測腳本橫跨第三與第四步，它抓形式、不抓語意，見[機械化檢查](#機械化檢查)。
 
-## 稽核約束 (Audit Constraints)
+## 稽核約束
 
 此處約束的是**稽核者**，不是被稽核的文字。
 
@@ -83,11 +83,11 @@ description: "稽核並改寫交付文件的書寫徵狀。以徵狀目錄比對
 | 1 | `docs/tasks/`、`TASK-*.md`、或含「驗證結果」節之工作紀錄 | `ticket` | 腳本依路徑自動套用 |
 | 2 | `CHANGELOG.md`、`decisions.md`、release notes | `changelog` | 腳本依路徑自動套用 |
 | 3 | commit message 草稿、PR 內容、review 回覆 | `pr-commit` | 需 `--profile pr-commit` 明指 |
-| 4 | 約束開發區 AI coding agent 行為之治理規範（`AGENTS.md`、`CLAUDE.md`、`.claude/`、開發治理類 `SKILL.md` 與 `core-rules/`） | `harness` | 腳本未指定時之預設值 |
+| 4 | 約束開發區 AI coding agent 行為之治理規範（`AGENTS.md`、各平台入口檔如 `CLAUDE.md`、`GEMINI.md`、各平台設定目錄如 `.claude/`、`.agents/`、開發治理類 `SKILL.md` 與 `core-rules/`） | `harness` | 腳本未指定時之預設值 |
 | 5 | 交付給業務 agent 執行的領域 Skill 正本與 `references/` | `agent-facing` | 需 `--profile agent-facing` 明指 |
 | 6 | 其餘系統操作規範、能力說明、對外發布或交付給客戶與使用者的文件 | `deliverable` | 需 `--profile deliverable` 明指 |
 
-第 3、5、6 項**光靠檔案路徑判不出來**，腳本不猜：`skills/` 之下既可能是給業務 agent 的產出物正本，也可能是談開發工作流的規範——後者的 `Harness`、`.claude/`、`本機` 正是它的主題而不是雜訊，套 `agent-facing` 會整片誤判。你在對話中讀完文件主題即可依上表優先序判出讀者是誰：非屬 AI agent 治理規範的一般技術文件、服務操作規範與能力說明一律歸第 6 項 `deliverable`，判出後以 `--profile` 明指並在回覆說明理由；腳本未加 `--profile` 時以 `harness` 為預設基底，規則全強度（含攔截單處本機絕對路徑）且略過開發者術語。
+第 3、5、6 項**光靠檔案路徑判不出來**，腳本不猜：`skills/` 之下既可能是給業務 agent 的產出物正本，也可能是談開發工作流的規範——後者的 `Harness`、各平台設定目錄、`本機` 正是它的主題而不是雜訊，套 `agent-facing` 會整片誤判。你在對話中讀完文件主題即可依上表優先序判出讀者是誰：非屬 AI agent 治理規範的一般技術文件、服務操作規範與能力說明一律歸第 6 項 `deliverable`，判出後以 `--profile` 明指並在回覆說明理由；腳本未加 `--profile` 時以 `harness` 為預設基底，規則全強度（含攔截單處本機絕對路徑）且略過開發者術語。
 
 ## 徵狀可靠度分層
 

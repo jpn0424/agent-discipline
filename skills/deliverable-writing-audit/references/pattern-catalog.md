@@ -48,7 +48,7 @@ A hit in this band is a delivery defect that compromises security or invalidates
 
 ### A2. AI Attribution Signature
 
-**Symptom**: Deliverables, commit messages, or PR descriptions contain `"provide by Claude"`, `"Generated with Claude"`, `"Co-Authored-By: Claude"`, or `"🤖 Generated with"`.
+**Symptom**: Deliverables, commit messages, or PR descriptions contain platform attribution signatures such as `"provide by Claude"`, `"Generated with Claude"`, `"Generated with Gemini"`, `"Co-Authored-By: GitHub Copilot"`, or `"🤖 Generated with"`.
 
 **Why**: Engineering deliverables and internal repository records must not advertise the authoring tool.
 

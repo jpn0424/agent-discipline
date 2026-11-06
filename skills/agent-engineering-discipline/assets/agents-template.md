@@ -1,5 +1,5 @@
 # <Project Name> — <One-sentence summary of what this repository is>
-> [REQUIRED] Copy to root as AGENTS.md. Pair with platform-specific pointer files (e.g. 2-line CLAUDE.md, .github/copilot-instructions.md).
+> [REQUIRED] Copy to root as AGENTS.md. Pair with the pointer files of the platforms your team actually uses (see Core Rule 10 for the entrypoint list); each only points to AGENTS.md.
 
 ## Project Positioning & Deliverables
 > [REQUIRED] Define deliverables, consumers, and edit boundaries.
