@@ -1,97 +1,98 @@
-# Core Rule 06: Implementation Restraint (最小實作與相容邊界)
+# Core Rule 06: Implementation Restraint
 
-## 為什麼要制定此規則？ (Why)
-Agent 寫實作時有兩種相反的失誤。
+## Why This Rule Exists (Why)
+Agents make two opposite mistakes during implementation.
 
-一是**過度建設**：預先做抽象層、設定開關、間接層，用來應付還沒出現的需求。多出來的每一層都要維護，而預期中的需求通常不會照預期出現。
+The first is **over-engineering**: building premature abstraction layers, configuration flags, or indirection for hypothetical future requirements. Every extra layer adds maintenance burden, and future requirements rarely take the shape predicted today.
 
-二是**擅自簡化**：為了讓程式碼看起來乾淨，把還在運作的路徑拆掉、把相容處理移除。已上線的服務、已發佈的套件、已通過的部署流程都有外部使用者，Agent 看不到他們。
+The second is **unilateral simplification**: ripping out working code paths or compatibility handling just to make the codebase look cleaner. Published packages, live services, and passing deployment pipelines have external consumers invisible to the agent.
 
-兩者的根因相同：**「要不要現在做這件事」是使用者的判斷，不是 Agent 的**。Agent 該做的是把當前需求做完整、把發現的問題提出來。
+Both mistakes share the same root cause: **deciding whether to invest in future flexibility or retire existing compatibility is the user's call, not the agent's**. The agent's job is to satisfy the current requirement completely and surface trade-offs clearly.
 
 ---
 
-## 具體執行方式 (How)
+## How to Execute (How)
 
-### 1. 夠用為準，不提前建設 (Simplest Thing That Fully Works)
+### 1. Simplest Thing That Fully Works
 
-選能完整滿足當前需求的最簡實作。凡是要多加一層東西，加進去之前先過兩個判準：
+Choose the simplest implementation that completely satisfies the current requirement. Before adding any extra layer, pass two criteria:
 
-- 這一層**現在**有兩個以上的實際使用者嗎？沒有就不要加。
-- 這個設定項**現在**有人會改成別的值嗎？沒有就寫死。
+- Does this layer have **two or more actual callers right now**? If not, do not add it.
+- Will anyone change this configuration knob to another value **right now**? If not, hardcode the value.
 
-「以後可能需要」不是使用者，是預測。
+"We might need it later" is a prediction, not a caller.
 
-**判準不分程式碼與文件。** 抽象層、設定開關、插件機制、間接層要過這兩關，目錄層級、檔案、文件同樣要過。多一個目錄要維護，多一份文件會與正本分歧，代價與多一層抽象是同一種。
+**This criterion applies equally to code and documentation.** Abstraction layers, config flags, plugin hooks, and indirection layers must pass both questions; directory levels, extra files, and extra documents must pass them too. An extra directory requires maintenance, and an extra document drifts from the canonical source.
 
-判斷使用者是誰時，看的是**現在誰會走到它**：程式碼的使用者是呼叫它的地方，目錄與文件的使用者是現在會讀它、或現在有流程會經過它的人。若某層只在某個尚未存在的流程建立之後才有作用，那個流程就是它的預測使用者，不算數——等該流程真的落地時，由建立它的人一併加上。
+When identifying who uses a layer, look only at **what traverses it today**: a code layer's user is its current call site; a directory or document's user is the person or workflow reading it right now. If a layer only becomes useful after a future workflow is built, that future workflow is a predicted user—add the layer when that workflow is actually implemented.
 
-另一個方向同樣要防：「夠用」不等於「做一半」。當前需求完整滿足，不留半成品，也不把自己沒做完的部分寫成已知限制——那會讓下游把你的進度誤認成系統邊界。
+Guard against the opposite failure as well: "simplest" never means "half-finished." Satisfy the current requirement end to end, leave no stubbed-out half-measures, and never document your own unfinished work as a "known system limitation."
 
-### 2. 分層長出來，不拿可運作換未完成 (Grow In Layers)
+### 2. Grow in Layers
 
-從能端到端跑起來的最小版本開始，每個新能力疊在已經可運作的產物之上。
+Start from the smallest end-to-end working slice and layer each new capability on top of a working system.
 
-判準是「改到一半時，東西還跑得動嗎」。跑不動就代表你把可運作的狀態換成了未完成的狀態，即使新設計比較好也一樣。需要大改時讓既有路徑保持可運作，新路徑驗證通過之後再切換，切換時機由使用者決定。
+The criterion is **"if we stop halfway through this refactor, does the system still run?"** If the answer is no, you have traded a working state for a broken state, regardless of how clean the target architecture looks. For major refactors, keep the existing path working until the new path is verified, and let the user decide when to switch over.
 
-### 3. 相容性的破壞由使用者決定 (Compatibility Is The User's Call)
+### 3. Compatibility Is the User's Call
 > [!IMPORTANT]
-> **硬約束。** 照字面執行，沒有判斷空間——違反後不可復原或影響第三方。
-**Agent 不得自行決定破壞或保留相容性。**
+> **Hard constraint:** Zero discretion.
 
-已發佈的套件、已上線的服務、外部專案引用的介面、已通過的部署流程——這些的相容邊界屬於使用者的決策範圍，因為只有他知道誰在用。
+**An agent must never unilaterally break or retain compatibility.**
 
-- 發現舊路徑應該退役：依 [Core Rule 03](03-task-ticket-discipline.md) 建立工項列管並提出，不要順手移除。
-- 使用者拍板退役之後：整條路徑**一次移除乾淨**，不留相容層、fallback 或遷移殘骸。文件也不得再把它寫成一個選項，這一點見 [Core Rule 09](09-deliverable-hygiene.md)。
+Published packages, live services, externally referenced interfaces, and passing deployment pipelines have compatibility boundaries that belong strictly to the user, because only the user knows who depends on them.
 
-這條與「移除過時路徑」不衝突，差別在**誰決定**。退役是使用者的決策，執行才是 Agent 的工作。
+- When you find a legacy path that should be retired: log a work item per [Core Rule 03](03-task-ticket-discipline.md) and propose it; do not delete it in passing.
+- Once the user authorizes retirement: remove the legacy path **completely in one pass**, leaving no compatibility shims, fallbacks, or migration debris, and remove all references that present it as an active option ([Core Rule 09](09-deliverable-hygiene.md)).
 
-### 4. 先用既有依賴，不自行重造 (Use What Is Already There)
+This does not conflict with retiring obsolete code—the difference lies in **who decides**. Retirement is the user's decision; clean execution is the agent's job.
 
-動手寫實作前，先確認專案既有的依賴能不能做到。
+### 4. Use What Is Already There
 
-判準是「你說『做不到』的時候，指得出查過哪裡嗎」。指不出來就還不能這樣說——先查官方文件、命令列說明與型別定義，附上查證來源再下結論。這是 [Core Rule 07](07-protocol-tool-hygiene.md) 零臆測原則在依賴選型上的延伸。
+Before writing custom implementation code, verify whether the project's existing dependencies already solve the problem.
 
-既有依賴確實無法涵蓋時，優先採用成熟且有人維護的函式庫，不要重造常見功能。新增依賴要能回答它降低了什麼複雜度或提高了什麼可靠度；答不出來就不加。
+The criterion is **"when claiming an existing library cannot do X, can you point to where you checked?"** Consult official documentation, CLI help output, and type definitions before concluding a capability is missing—extending the zero-speculation principle of [Core Rule 07](07-protocol-tool-hygiene.md) to dependency selection.
 
-### 5. 權宜之計留下退場條件 (No Silent Stopgap)
+When existing dependencies genuinely do not cover the need, prefer mature, maintained libraries over hand-rolling standard utilities. Any new dependency must justify which complexity it eliminates or which reliability guarantee it adds.
 
-架構決策要撐得住，但這不是提前建設的藉口，第 1 條優先。兩者的分界是：**撐得住講的是現在這個決定不會很快被推翻，不是預先蓋好未來要用的東西。**
+### 5. No Silent Stopgap
 
-判斷自己是否正在默默接受權宜，看有沒有「先這樣，之後再換」的念頭卻沒有落到紙上。真的需要權宜時三件事一起做：當場建立工項列管、在工項裡寫明什麼情況下必須換掉、在程式碼或文件標明它是權宜。
+Architectural choices should hold up, without becoming an excuse for premature construction (Section 1 takes precedence). The boundary is: **durability means today's decision will not immediately collapse, not pre-building tomorrow's features.**
 
-三者缺一，下一個讀者會把它當定案。沒有退場條件的權宜之計等於永久方案，而且是沒有人知道自己接受了的永久方案。
+You are introducing a silent stopgap whenever you think "let's do this for now and replace it later" without writing that down. When a stopgap is genuinely necessary, do three things together: create a tracking work item immediately, specify the exact **sunset condition** under which it must be replaced, and mark the stopgap explicitly in the code or specification.
 
-### 6. 結構要能從名字看出歸屬 (Structure Must Be Legible)
+Omitting any of the three turns a temporary compromise into an undocumented permanent design.
 
-模組化的判準不是「有沒有拆」，是**讀者能不能從路徑與名稱判斷這段東西屬於誰、做什麼**。
+### 6. Structure Must Be Legible
 
-判斷失敗的三種常見形態，遇到時依情境決定統一、合併還是拆除：
+The criterion for modularity is not "did we split the files?", but **"can a reader tell from the path and filename alone who owns this component and what it does?"**
 
-- 同一層出現兩個名字相近卻語意不同的目錄。
-- 只有一個使用者的中間層。
-- 放在根目錄的邏輯程式碼。
+Watch for three common legibility failures and consolidate, rename, or flatten accordingly:
 
-形態成立不代表非改不可——正在準備接第二個使用者的中間層是例外。但要說得出你的判斷是什麼。
+- Two sibling directories with near-identical names but different semantics.
+- An intermediate wrapper directory with only a single child consumer.
+- Core domain logic dumped directly into the repository root.
+
+Matching one of these patterns does not automatically force a refactor—an intermediate layer actively being prepared for an imminent second consumer is a valid exception—but you must be able to state your judgement explicitly.
 
 ---
 
 ## Gotchas
 
-以下來自實際發生的失誤，不是從規則推導出來的。
+From real failures, not derived rules.
 
-### 定義了但沒有人用的東西，不會因為它合理而變得需要
+### Something Defined With Zero Callers Does Not Become Necessary Just Because It Looks Clean
 
-**什麼情況會踩到**：建立一層結構——資料模型、目錄、設定檔、額外的文件——理由是它符合慣例，或是之後某個流程會用到。
+**When it happens**: You create a data model, directory, configuration file, or reference document because it follows a familiar pattern or might serve a future workflow.
 
-**為什麼當下不會察覺**：這類決定在建立當下都有一個成立的理由，而且理由通常引用了某種良好實踐。要等別人問「這個是提供給誰用的，我們自己會用嗎」，才會發現答案是沒有人。實際發生時，定義已經寫好，卻沒有任何地方使用它。
+**Why it goes unnoticed**: At creation time, the structure has a plausible rationale grounded in general "best practices." Only when someone asks "who calls this right now?" does it become obvious that the answer is nobody.
 
-**判準**：多加一層之前，指出**現在**誰會走到它。指不出來就不要加。「等某個流程建立之後會用到」不算——那個流程落地時，由建立它的人一併加上。
+**Criterion**: Before adding any new layer or file, name **who traverses it right now**. If nobody traverses it today, do not create it; let the future workflow create it when that workflow actually lands.
 
-### 確認過沒人用，與確認過移除不影響，是兩件事
+### "Nobody Calls It in This Repo" Is Not "Removing It Is Safe"
 
-**什麼情況會踩到**：某個介面或欄位查過沒有使用者，於是判定移除它不算破壞相容。
+**When it happens**: You grep the local repository for callers of an interface or field, find zero hits, and conclude that deleting it is non-breaking.
 
-**為什麼當下不會察覺**：「沒人用」的查證範圍通常是手邊看得到的程式碼，但已發佈的套件與已上線的服務，使用者在看不到的地方。而且移除與調整的影響面不同。實際發生時被問到的正是這一點：已確認不需要的移除，與會動到既有資料的調整，要分開判斷。
+**Why it goes unnoticed**: Local search only sees code inside the current repository, whereas consumers of published packages, shared skills, or live APIs live in external repositories. Removing an unused internal helper and mutating an external schema have completely different blast radii.
 
-**判準**：移除既有介面前，先分清楚影響的是哪一層：內部實作、對外介面、還是資料結構。對外的部分保留並標示棄用，讓下游在開發時看得到提醒，實際移除的時機由使用者決定。
+**Criterion**: Before removing any existing interface or field, classify which layer it belongs to: internal implementation, external interface, or persistent data schema. For external interfaces and schemas, mark them deprecated and leave the removal timing to the user.

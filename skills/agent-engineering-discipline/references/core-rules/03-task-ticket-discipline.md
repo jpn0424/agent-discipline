@@ -1,54 +1,55 @@
-# Core Rule 03: Work Item Discipline (工項紀律與無口頭延後)
+# Core Rule 03: Work Item Discipline
 
-## 為什麼要制定此規則？ (Why)
-在與 Agent 對話過程中，Agent 常會發現程式碼邊角 bug 或潛在重構點，並口頭承諾「這部分改天有空再修」。這種口頭承諾隨著工作階段結束就會徹底遺失。
-工項要承擔的不只是記住這件事。做完之後別人要看得出當時憑什麼算完成——沒有寫定的判準，完成與否就由做的人自由心證；涉及畫面的驗證只有文字敘述，別人無法複核。因此工項上要有狀態、方法與驗收條件，UI 類的驗證要有截圖。
+## Why This Rule Exists (Why)
+During a work session, agents frequently spot edge-case bugs or refactoring candidates and offer an oral promise: "we can clean that up later." Once the session ends, that oral promise vanishes completely.
+
+A work item does more than prevent forgetting. Anyone inspecting the repository afterward must be able to see what constituted completion at the time—without pre-written acceptance criteria, completion degenerates into the executor's subjective claim; without screenshots for visual state changes, prose claims cannot be independently audited. Every work item therefore records its status, execution method, and acceptance criteria, plus screenshots whenever visual or external UI state is involved.
 
 ---
 
-## 具體執行方式 (How)
+## How to Execute (How)
 
-### 1. 動手前先建立工項 (Work Item Before Touch)
+### 1. Work Item Before Touch
 
-**工作項目（以下簡稱工項，Work Item）**是承載單一任務的輸入、產出、限制與驗收證據的最小追蹤單元。動手前建立工項的判準是「這次改動會不會需要事後回溯」。修改程式碼、Skills 或部署設定屬於會，複製 `assets/task-template.md` 在專案 `docs/tasks/` 建立 `TASK-YYYYMMDD-HHMMSS-<rr>-<slug>.md`，一件任務一個工項。
+A **Work Item** is the minimal tracking unit carrying the inputs, outputs, constraints, and verification evidence of a single task. The criterion for creating a work item before acting is **"will this change ever need to be traced after the fact?"** Modifying code, Skills, or deployment configuration always qualifies: copy [assets/task-template.md](../../assets/task-template.md) to `docs/tasks/TASK-YYYYMMDD-HHMMSS-<rr>-<slug>.md`, one task per work item.
 
-編號採「日期 + 秒級時間 + 2 碼十六進位亂數」格式（如 `TASK-20261030-024000-a1`），確保在多 Agent 並行或跨 Git Worktree 隔離環境下維持嚴格時間序且零碰撞。動手前以標準庫指令取號，不得憑空猜測：
+Generate the prefix using "date + second-level timestamp + 2-digit hex random suffix" such as `TASK-20261030-024000-a1` so parallel agents and isolated Git worktrees maintain strict chronological ordering with zero ID collisions. Run the standard-library generator before creating the file rather than guessing a timestamp:
 
 ```bash
 python3 -c "import time,secrets; print(time.strftime('TASK-%Y%m%d-%H%M%S-') + secrets.token_hex(1))"
 ```
 
-歷史工項若採 `TASK-YYYYMMDD-NN` 格式維持原樣，不回溯改名。單純回答問題、閱讀程式碼、產出不落地的分析屬於不會事後回溯，建立工項只是雜訊。改一個錯字算不算，看它會不會被別人問起——會就建立。
+Historical work items using the `TASK-YYYYMMDD-NN` format remain untouched; do not rename them retroactively. Answering questions, reading code, or producing ephemeral analysis that modifies no files does not require post-hoc traceability, so creating a work item would only add noise. For a single-character typo fix, ask whether anyone will later ask why that line changed—if yes, create a work item.
 
-### 2. 消滅「改天處理」口頭承諾 (No Oral Postponement)
+### 2. No Oral Postponement
 
-已知問題只有兩種去處：當下修完，或當下有工項編號。第三種去處不存在。
+A known defect has only two valid destinations: fixed right now, or assigned a work item ID right now. A third destination does not exist.
 
-判斷方式很直接——你的回覆裡出現「之後再」、「有空再」、「先這樣」這類詞，就代表這個問題正在往第三種去處走。改成指得出工項編號的敘述，例如「已建立工項 TASK-20260723-143000-a1，狀態列管中」。指不出工項編號就是還沒建立工項。
+The test is straightforward: if your response contains phrases like "later," "in a future pass," or "leave it like this for now," the issue is slipping into that nonexistent third destination. Replace the phrase with a concrete work item reference, such as "Logged under `TASK-20260723-143000-a1`, status `[Pending]`." If you cannot point to a work item ID, the issue has not been tracked.
 
-### 3. UI 與外部系統操作的驗證截圖 (Screenshots)
+### 3. Screenshots for UI and External System Operations
 
-判準是「這次驗證的證據，別人看得到嗎」。涉及 UI 操作、或對外部系統產生了畫面上看得到的狀態，文字敘述無法讓人複核，截圖存於 `docs/tasks/screenshots/` 並在工項中以相對路徑引用：`![驗證截圖](screenshots/TASK-20260723-143000-a1__login.png)`。
+The criterion is **"can another person inspect the evidence of this verification?"** Whenever verification involves a UI or produces visible state in an external system, prose descriptions cannot be audited; save screenshots under `docs/tasks/screenshots/` and link them via a relative path in the work item: `![Verification Screenshot](screenshots/TASK-20260723-143000-a1__login.png)`.
 
-該目錄要加入 `.gitignore`——截圖常含客戶名、主機名這類機敏內容，這一點沒有判斷空間，見 [Core Rule 09](09-deliverable-hygiene.md)。
+Add `docs/tasks/screenshots/` to `.gitignore`—screenshots frequently capture customer names, internal hostnames, or session tokens. There is zero room for discretion here; see [Core Rule 09](09-deliverable-hygiene.md).
 
-純程式或純文件類的驗證，證據是測試輸出而不是畫面，該欄寫「不適用」。留空與寫「不適用」的差別在於：留空看不出你判斷過沒有。
+For pure code or documentation tasks where the evidence is command output rather than a screen state, write `Not applicable` in the screenshot field. Writing `Not applicable` proves you evaluated the requirement; leaving the field blank looks like an oversight.
 
-### 4. 狀態、關聯、方法與驗收條件寫在工項上 (State, Relations, Method And Acceptance On The Work Item)
+### 4. State, Relations, Method, and Acceptance on the Work Item
 
-判準是「別人接手這個工項，需不需要回頭問你」。四個欄位承擔這件事。
+The criterion is **"if another agent or engineer picks up this work item, can they proceed without asking you where it stands?"** Four fields carry that responsibility.
 
-**當前狀態只有四個值**：`[待處理]`、`[進行中]`、`[已完成]`、`[已取消]`。狀態表達的是這個工項在流程上的位置，不表達它在等什麼裁示、卡在哪個條件、證據累積到哪裡——那些是內容，寫進工項的背景與待決定事項。
+**Current status has exactly four valid values**: `[Pending]`, `[In Progress]`, `[Completed]`, and `[Cancelled]`. Status expresses where the work item sits in the workflow lifecycle—not what ruling it is waiting on, which condition is blocking it, or how much evidence has been gathered. Those details belong in the work item body.
 
-想新增第五個值時，腦中的那個詞通常在描述狀況而不是位置——「待評估」可以是還沒有人接手、等著被評估，也可以是有人正在評估。讀的人因此判不出這個工項走到哪，而那正是狀態欄唯一要回答的事。
+Whenever you are tempted to invent a fifth status value, the phrase in mind describes a circumstance rather than a lifecycle state—for example, "Awaiting Evaluation" could mean nobody has picked it up yet or someone is actively evaluating it right now, obscuring the very question the status field exists to answer.
 
-**關聯工項表達相依與演進關係**：工項存在前置阻擋、版本更迭或概念延續時，在頭部宣告「關聯工項」。關係採具名且有方向的三種形式，無相依時填 `無`：
-- `阻擋於 TASK-...`：本工項被該前置工項阻擋，必須等對方完成後才能開始執行。
-- `取代 TASK-...`：本工項提出新解法或重構，直接廢棄並取代舊工項。
-- `參照 TASK-...`：兩者具備主題延續、概念關聯或引用其研究結論，無直接前置阻擋。
+**Related work items express directional dependencies and lineage**: When a work item has a blocker, supersedes an older approach, or builds on prior findings, declare `Related Work Items` in the header using three named directional forms, or write `None` when independent:
+- `Blocked by TASK-...`: Execution cannot start until the referenced work item reaches `[Completed]`.
+- `Supersedes TASK-...`: This work item replaces and retires an older work item.
+- `References TASK-...`: Shares domain context or builds on findings from the referenced work item without a blocking dependency.
 
-**執行方法在工項中宣告**：測試先行、兩階段規劃、研究、其他方式，或不適用。方法的選擇依據見 `SKILL.md` 的「方法」節。單行修正與文件調整這類任務寫「不適用」，理由不必補。
+**Execution method is declared on the work item**: Test-First, Brainstorm and Plan, Research, another named method, or `Not applicable`. See the `Methods` section of [SKILL.md](../../SKILL.md) for how to select an execution method. Single-line fixes and pure prose edits write `Not applicable` without further justification.
 
-**驗收條件在建立工項時寫定**：什麼成立才算完成，逐條寫成不必判讀就能核對的條件。它與驗證方式是兩件事——驗收條件是判準，驗證方式是取得判準所需證據的步驟。判準含糊時，完成與否就由做的人自由心證。判準要寫成什麼形式才算可判定，見 [Core Rule 04](04-delegation-contract.md)；本節只管它必須存在、必須在動手前寫定。
+**Acceptance criteria are fixed when the work item is created**: Write each condition on its own line in a form that can be checked without subjective re-interpretation. Acceptance criteria and verification steps are distinct: acceptance criteria define what must hold true, while verification steps define the commands or checks used to gather that proof. For how to make criteria decidable, see [Core Rule 04](04-delegation-contract.md); this section requires that they exist and are written before touching files.
 
-**寫定之後不得因結果調整。** 做完發現達不到，要動的是實作或範圍，不是判準。真的需要改判準時，在工項內寫明改了什麼、為什麼改，讓事後看得出判準動過——否則「已完成」會退化成「我決定它完成了」，而這正是驗收條件要防的事。
+**Never weaken acceptance criteria after the fact to fit a partial result.** If execution falls short of a criterion, adjust the implementation or renegotiate scope with the user—never silently edit the criterion so you can mark `[Completed]`. If a criterion genuinely must change, record what changed and why inside the work item.

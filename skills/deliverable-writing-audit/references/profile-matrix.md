@@ -1,36 +1,36 @@
-# 情境寬容矩陣 (Profile Tolerance Matrix)
+# Profile Tolerance Matrix
 
-判定 profile 之後、下判讀之前必須讀完本表。不讀等於全部按 `harness` 全強度處理，對 `ticket` 與 `changelog` 會大量誤判——記錄變更歷程在那兩個情境是正確形式，不是徵狀。
+Read this table after determining the `profile` and before adjudicating any hits. Skipping this table treats every document at full `harness` strictness, causing heavy false positives on `ticket` and `changelog` files—recording change history in those two profiles is the proper form, not a writing symptom.
 
-profile 的判定方式在 [SKILL.md](../SKILL.md) 的「情境自動判定」節。徵狀本身的定義在 [pattern-catalog.md](pattern-catalog.md)。
+Profile resolution rules are defined in the `"Automatic Profile Precedence"` section of [SKILL.md](../SKILL.md). Symptom definitions reside in [pattern-catalog.md](pattern-catalog.md).
 
-## 矩陣
+## Matrix
 
-未列出的徵狀在所有情境都全強度適用。
+Symptoms not listed below apply at `Strict` tolerance across all profiles.
 
-| 徵狀 | harness | agent-facing | deliverable | ticket | changelog | pr-commit |
+| Symptom | harness | agent-facing | deliverable | ticket | changelog | pr-commit |
 | --- | --- | --- | --- | --- | --- | --- |
-| 機敏值外洩 | 嚴格 | 嚴格 | **加嚴** | 嚴格 | 嚴格 | **加嚴** |
-| 本機絕對路徑 | 嚴格（指向外部 SoT 時判讀放過；格式示例用佔位符） | 嚴格 | **加嚴** | 放寬 | 放寬 | 嚴格 |
-| 維運註記（工項編號、決策編號、同步狀態） | 放寬（開發者導向） | **加嚴**（不得夾帶） | **加嚴** | 略過（就是工項本身） | 略過 | 放寬（可引工項編號） |
-| 流水帳／比較新舊 | 嚴格 | 嚴格 | 嚴格 | 放寬（記錄歷程是本分） | 略過（本質即變更紀錄） | 放寬（就是在講改了什麼） |
-| 括號補述 | 嚴格 | 嚴格 | 嚴格 | 嚴格 | 放寬 | 嚴格 |
-| 個人註記殘留 | 嚴格 | 嚴格 | **加嚴** | 放寬（待辦是欄位內容） | 嚴格 | 嚴格 |
-| 「未實測」殘留 | **加嚴** | **加嚴** | **加嚴** | **加嚴** | 放寬 | 略過 |
-| 無證據的限制宣稱 | 嚴格 | **加嚴** | **加嚴** | 嚴格 | 放寬 | 略過 |
-| 已退役術語 | 嚴格 | **加嚴** | **加嚴** | 放寬（可寫為何退役） | 略過 | 放寬 |
-| 開發者術語（`.claude/`、Harness、本機路徑代稱） | 略過 | 嚴格 | **加嚴** | 略過 | 放寬 | 嚴格 |
-| emoji 密度 | 放寬 | 放寬 | 嚴格 | 略過 | 略過 | 嚴格 |
-| domain 細節過深 | 略過 | 略過 | 略過 | 略過 | 放寬 | **加嚴**（PR 要淺白） |
-| 規則重複散落 | **加嚴** | **加嚴** | 嚴格 | 略過 | 略過 | 略過 |
-| 同義反覆與非操作型定義 | **加嚴** | **加嚴** | **加嚴** | 放寬 | 放寬 | 略過 |
-| 道義模態混淆 | **加嚴** | **加嚴** | **加嚴** | 放寬 | 略過 | 放寬 |
+| Secret and credential leakage | Strict | Strict | **Extra-strict** | Strict | Strict | **Extra-strict** |
+| Local absolute path | Strict (exempt when pointing to external SoT; use placeholders for format examples) | Strict | **Extra-strict** | Relaxed | Relaxed | Strict |
+| Operational metadata (work item IDs, decision IDs, sync status) | Relaxed (developer-facing) | **Extra-strict** (must not leak) | **Extra-strict** | Skip (is the work item itself) | Skip | Relaxed (may cite work item IDs) |
+| Change narration / before-after comparison | Strict | Strict | Strict | Relaxed (recording history is its job) | Skip (inherently a change log) | Relaxed (explains what changed) |
+| Parenthetical gloss | Strict | Strict | Strict | Strict | Relaxed | Strict |
+| Residual note-to-self | Strict | Strict | **Extra-strict** | Relaxed (todos are field content) | Strict | Strict |
+| Residual unverified status | **Extra-strict** | **Extra-strict** | **Extra-strict** | **Extra-strict** | Relaxed | Skip |
+| Unevidenced capability limitation claim | Strict | **Extra-strict** | **Extra-strict** | Strict | Relaxed | Skip |
+| Revived retired terminology | Strict | **Extra-strict** | **Extra-strict** | Relaxed (may explain why retired) | Skip | Relaxed |
+| Developer jargon (`.claude/`, `Harness`, local path aliases) | Skip | Strict | **Extra-strict** | Skip | Relaxed | Strict |
+| Emoji density | Relaxed | Relaxed | Strict | Skip | Skip | Strict |
+| Excessive domain implementation detail | Skip | Skip | Skip | Skip | Relaxed | **Extra-strict** (PRs must stay accessible) |
+| Scattered duplicate rules | **Extra-strict** | **Extra-strict** | Strict | Skip | Skip | Skip |
+| Tautological and non-operational definitions | **Extra-strict** | **Extra-strict** | **Extra-strict** | Relaxed | Relaxed | Skip |
+| Deontic modality confusion | **Extra-strict** | **Extra-strict** | **Extra-strict** | Relaxed | Skip | Relaxed |
 
-## 三種強度的語意
+## Semantics of the Four Tolerance Levels
 
-- **加嚴**：連邊界案例都標。
-- **嚴格**：依徵狀本身的分層與例外條件判定，這是預設強度。
-- **放寬**：只標明顯過量的情形，單獨一兩處放過。
-- **略過**：這個情境不稽核此項，因為該形式在此處是正確的。命中也不列入回報。
+- **Extra-strict**: Flags even `[borderline]` cases.
+- **Strict**: Evaluates according to the symptom's baseline tier and exception clauses; this is the default tolerance level.
+- **Relaxed**: Flags only pronounced clusters (two or more non-borderline hits in a file); a single isolated occurrence is exempted.
+- **Skip**: Does not audit this symptom under this profile because the form is legitimate here. Hits are omitted from the report.
 
-放過的項目仍要在回報中說明為什麼放過，讓使用者知道你看過了而不是漏了。
+Exempted hits under `Strict` or `Relaxed` must still be noted in your report with the reason for exemption so the user knows you inspected them rather than missed them.

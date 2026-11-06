@@ -1,60 +1,60 @@
-# Core Rule 04: Delegation Contract (工項的委派契約)
+# Core Rule 04: Delegation Contract
 
-## 為什麼要制定此規則？ (Why)
-一個只有自己看得懂的工項，交給別的 Agent 執行時，執行者只能靠猜補完留白——而它會補，並且補得很有自信。產出因此看起來完成、實際偏離意圖，錯誤要到很後面才暴露。
+## Why This Rule Exists (Why)
+When a work item written only as a personal reminder is handed to another agent, the executing agent fills every unstated gap with confident guesswork. The resulting output looks complete on the surface while diverging from the intended design, hiding defects until late integration.
 
-把工項寫成契約，是讓「這個工項能不能交出去」變成當下看得見的事實，而不是執行後才知道的賭注。
+Writing a work item as an explicit contract turns "is this ready to delegate?" into an observable fact before execution starts, rather than a gamble discovered after the subagent finishes.
 
 ---
 
-## 具體執行方式 (How)
+## How to Execute (How)
 
-### 1. 契約三段 (Input, Output, Constraints)
+### 1. Three Contract Sections (Inputs, Outputs, Constraints)
 
-可委派的工項要具備三段，缺一段就先補完再交：
+A delegable work item must specify three sections; complete any missing section before handing it off:
 
-| 契約段落 | 內容定義 | 缺漏風險 |
+| Contract Section | Required Content | Risk When Omitted |
 | --- | --- | --- |
-| **輸入** | 提供前置要件：來源檔案、參數、前置狀態與已知事實 | 執行者自行搜尋填補，導致非預期偏離 |
-| **產出** | 定義交付成果與**完成驗收判準**（見完成判準節） | 執行者自訂驗收標準 |
-| **限制** | 明確作業邊界與禁止事項（見限制段節） | 執行者執行未被授權或超出範圍之動作 |
+| **Inputs** | Preconditions: source file paths, parameters, prior state, and known facts | Executor invents or searches arbitrary sources, causing silent drift |
+| **Outputs** | Target deliverables and **decidable acceptance criteria** (see Section 2) | Executor defines its own lowered bar for completion |
+| **Constraints** | Explicit file boundaries and prohibited actions (see Section 3) | Executor performs unauthorized edits or scope creep |
 
-**判準**：把工項交給一個不在場、沒有這段對話脈絡的執行者，它能不能只讀這個工項就動手。不能，就是還有留白。
+**Criterion**: Hand the work item to an agent with zero access to the current conversation transcript—can it execute the task from start to finish by reading the work item alone? If not, the contract still has unstated gaps.
 
-不設「委派難度分級」。等級是對難度的事前預測，預測不準又無從校準，而判級者有低估難度好把工項發出去的動機。契約完整性是當下就看得見的東西，這是它比分級可靠的地方。
+Do not assign "delegation difficulty tiers." Difficulty ratings are pre-execution guesses that cannot be calibrated and incentivize under-rating tasks just to dispatch them. Contract completeness is directly observable before execution.
 
-### 2. 完成判準是可判定，不是可執行
+### 2. Acceptance Criteria Must Be Decidable, Not Merely Executable
 
-產出規格要能讓**驗收者不重做一遍，就判斷得出做完了沒**。
+Output specifications must allow **an evaluator to determine whether the work item is complete without redoing the work**.
 
-可執行的測試只是這件事在程式類任務上的特例，不是判準本身。判定形式由產出的性質決定：
+Automated unit tests are one special case of decidability for code tasks, not the definition of decidability itself. Match the verification form to the nature of the artifact:
 
-| 產出性質 | 驗收判準 | 典型反例 |
+| Artifact Nature | Acceptance Criteria | Typical Counterexample |
 | --- | --- | --- |
-| 程式與設定 | 執行正常、自動化測試通過、檢核腳本結束碼為 0 | 「應該可以動」 |
-| 研究與調查 | 比對形式結構完整度、查核引用來源與佐證齊備度 | 「已研究過」 |
-| 探索與盤點 | 能確切回答既定問題、交付物可銜接下游工項輸入 | 「大致了解了」 |
+| Code and configuration | Runs cleanly, automated tests pass, validator script exits with code `0` | "Should work now" |
+| Research and investigation | Required structural sections present, primary sources and citations verified | "Researched the topic" |
+| Exploration and inventory | Directly answers the stated questions, output feeds cleanly into downstream work items | "Got a rough idea" |
 
-**驗收判定的是產出符不符合規格，不是結論對不對。** 研究類任務的結論正確與否要驗就等於重做，那不屬驗收，另循該領域的可信度判準處理。
+**Acceptance verifies conformance to specification, not the ultimate truth of a research conclusion.** Verifying whether a research conclusion is substantively right requires redoing the research, which is governed by domain credibility criteria rather than work item acceptance.
 
-寫不出判定方式時，代表產出還沒被定義清楚。這時要回頭收斂產出，不是降低要求。
+If you cannot state how completion will be judged, the output itself is not yet defined. Refine the output definition rather than weakening the acceptance bar.
 
-### 3. 限制段是為執行者而寫
+### 3. Write Constraints for the Executor
 
-輸入與產出自然會被寫，限制最容易留白。但執行者的失敗模式往往不在能力不足，而在做了沒被要求的事。限制段固定承載三件：
+Inputs and outputs are written naturally; constraints are what authors skip. Yet subagent failures rarely stem from lack of capability—they stem from doing things nobody asked for. Every `Constraints` section must specify three items:
 
-- **檔案邊界**：可以動哪些、不准動哪些。邊界明確才談得上多個工項並行，範圍重疊的工項不能同時發。
-- **不得做什麼**：本次不處理的相鄰問題。發現了就依 [Core Rule 03](03-task-ticket-discipline.md) 建立工項列管，不順手改掉。
-- **卡住時的行為**：停下來回報，說明卡在哪、缺什麼條件；不即興發揮，也不繞路硬幹。
+- **File boundary**: Exact paths the executor may modify and paths it must not touch. Parallel work items are safe only when their file boundaries are disjoint.
+- **Prohibited actions**: Adjacent issues excluded from this pass. If discovered, log a new work item per [Core Rule 03](03-task-ticket-discipline.md) instead of fixing them in passing.
+- **Behavior when blocked**: Stop immediately and report what is blocking and which condition is missing; never improvise a workaround or force through an unverified path.
 
-### 4. 執行者不自證通過
+### 4. Executors Do Not Self-Certify
 
-驗收依工項上寫定的判定方式進行，不採信執行者對自己成果的宣稱。這是 [Core Rule 11](11-skill-and-agent-spec.md) 雙層治理在工項層的延伸，不是新機制。
+Evaluate completion strictly against the acceptance criteria written in the work item, never by trusting the executor's own summary claim. This extends the two-tier governance of [Core Rule 11](11-skill-and-agent-spec.md) to work item acceptance.
 
-執行結果與契約不符時，先判斷是執行者能力不足，還是契約本身沒寫清楚。前者換更強的執行者重跑，後者回頭修契約——**兩者的差別在契約有沒有留白，不在產出看起來多糟**。
+When output fails the contract, determine whether the executor lacked capability or the contract left a gap. Re-run with a stronger model for the former; tighten the contract for the latter—**the distinction lies in whether the contract was ambiguous, not how bad the output looks**.
 
-### 5. 契約可以調整
+### 5. Contracts Can Evolve
 
-契約不在建立工項當下凍結。留白多半要到第一次執行才會暴露，暴露了就回頭修改工項並記錄改了什麼。
+A contract is not frozen at creation time. Unstated assumptions often surface only during the first execution pass; when they do, update the work item and record what changed.
 
-建立工項時要求的不是完美，是**收斂到足以往下走**。過度追求建立工項即完備，會把成本堆在最不確定的時點；但完全不收斂就交出去，等於把定義工作轉嫁給最沒有脈絡的一方。
+Creating a work item requires **converging enough to take the next step reliably**, not predicting every detail upfront. Over-specifying at the point of maximum uncertainty wastes effort, whereas delegating an unconverged stub dumps design responsibility onto the agent with the least context.

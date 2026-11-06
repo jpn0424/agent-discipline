@@ -1,489 +1,489 @@
-# 徵狀目錄 (Pattern Catalog)
+# Pattern Catalog
 
-## 目錄 (Contents)
+## Contents
 
-共 28 條徵狀，分四組。每條含徵狀／為什麼／修法／例外／證據／偵測六欄。
+Contains 28 writing symptoms across four groups. Every entry specifies six fields: **Symptom**, **Why**, **Fix**, **Exceptions**, **Evidence**, and **Detection**.
 
-| 組 | 分層 | 條目 |
+| Group | Tier & Severity | Entries |
 | --- | --- | --- |
-| A. 資安與可信度 | Tier 1A、P0 | A1 機敏值外洩／A2 AI 署名／A3 假成功宣稱／A4「未實測」殘留／A5 本機絕對路徑 |
-| B. 形式雜訊 | Tier 1B、P1 | B1 流水帳與比較新舊／B2 括號補述／B3 個人註記殘留／B4 標題回音／B5 文件描述自己／B6 標題與內容不相稱 |
-| C. 需要讀懂語意 | Tier 2、P1 | C1 無證據的能力限制宣稱／C2 該結構化卻寫成流水句／C3 已退役術語復活／C4 規則重複散落／C5 摘要掉錯誤原文／C6 臆測填空／C7 開發者術語滲入交付物／C8 專案特定事實滲入通用規範／C9 導覽夾帶內容／C10 跨檔不一致／C11 同一概念多個名字／C12 同義反覆與非操作型定義／C13 道義模態混淆 |
-| D. 密度類 | Tier 3、P2 | D1 模糊量詞與填充詞／D2 emoji 密度／D3 條列標籤用句號／D4 domain 細節過深，僅 `pr-commit` 情境 |
+| A. Security and Credibility | Tier 1A, P0 | A1 Secret and Credential Leakage / A2 AI Attribution Signature / A3 Unverified Success Claim / A4 Residual Unverified Status / A5 Local Absolute Path |
+| B. Formal Noise | Tier 1B, P1 | B1 Change Narration and Before/After Comparison / B2 Parenthetical Gloss / B3 Residual Note-to-Self / B4 Heading Echo / B5 Self-Describing Metadiscourse / B6 Heading-Scope Mismatch |
+| C. Semantic Comprehension | Tier 2, P1 | C1 Unevidenced Capability Limitation Claim / C2 Unstructured Prose for Enumerable Facts / C3 Revived Retired Terminology / C4 Scattered Duplicate Rules / C5 Summarized Away Verbatim Error / C6 Speculative Filling / C7 Developer Jargon Leaked into Deliverables / C8 Project-Specific Facts Leaked into Shared Rules / C9 Navigation Carrying Target Content / C10 Cross-File Inconsistency / C11 Multiple Terms for One Concept / C12 Tautological and Non-Operational Definitions / C13 Deontic Modality Confusion |
+| D. Density and Formatting | Tier 3, P2 | D1 Vague Quantifiers and Filler Words / D2 Emoji Density / D3 Period Inside Bold List Label / D4 Excessive Domain Implementation Detail (`pr-commit` profile only) |
 
-四組之後另有兩節：「何時該整份重寫而不是逐條修」給出三項同時成立時改採重寫的判準；「自我引用豁免」界定本目錄自身的壞例子不受稽核。
+Two additional sections follow Group D: `"When to Rewrite the Entire Document Instead of Patching"` defines the three-condition criterion for full document reconstruction; `"Self-Reference Exemption"` exempts quoted negative examples within this Skill from triggering self-audit flags.
 
 ---
 
-本目錄的每一條徵狀都來自實際發生過的糾正。**證據**欄記錄該條的依據型態，以及那些糾正所對應的問題——當時的文字出了什麼狀況、讀者因此會誤判或得不到什麼：
+Every symptom in this catalog originated from real corrections. The **Evidence** field records the evidence category and the underlying failure pattern—what went wrong in the text at the time and what misjudgement or information loss it caused the reader:
 
-- **事後糾正**：文字已經寫錯，使用者回頭指出。這是最強的證據。
-- **事前護欄**：使用者在交派任務時反覆先寫下禁令。反覆預先設防本身就代表這個錯誤會重複發生。
-- **外部研究**：已發表的實證。標明出處與測量對象，並寫出它與本情境的落差——外部研究測的多半不是「文件這樣寫會怎樣」，直接套用是外推。
+- **Post-hoc correction**: The defect was written into a document and explicitly corrected by the user afterward. This is the strongest form of evidence.
+- **Pre-emptive guardrail**: The user repeatedly wrote an explicit prohibition into task prompts before delegating work. Repeated pre-emptive defense proves the failure recurs without a standing guardrail.
+- **External research**: Published empirical findings. Entries cite the source and measured subject while explicitly stating the **Gap** between the external study and this context—external studies rarely measure document prose directly, so applying them without noting the gap would be extrapolation.
 
-**偵測**欄標明由 `scripts/detect.py` 機械比對，或必須由 Agent 讀懂語意判讀。兩者的完整對照見 [category-map.md](category-map.md)。各徵狀背後的五大理論支柱（Grice 準則、受控語言、操作型定義、道義邏輯與資訊映射）映射詳見 [methodology-grounding.md](methodology-grounding.md)。
+The **Detection** field specifies whether the symptom is matched mechanically by `scripts/detect.py` or requires semantic judgement by the Agent. Full mapping details reside in [category-map.md](category-map.md). Theoretical alignments across the five foundational pillars (Gricean maxims, Controlled Natural Language, operational definitions, deontic logic, and Information Mapping) reside in [methodology-grounding.md](methodology-grounding.md).
 
 > [!NOTE]
-> **證據欄寫問題的型態，不收錄原話。** 一句糾正只是那個問題在某一次的表現，規則要防的是問題本身。人名、帳號、專案名、repo 名、決策編號、工項編號、具體工具名一律不出現。
+> **The Evidence field records the structural failure pattern, never verbatim user quotes.** A single correction is one surface instance of an underlying failure mode; the rule exists to prevent the failure mode itself. Personal names, accounts, project names, repo names, decision IDs, work item IDs, and specific internal tool names are strictly omitted.
 
 ---
 
-## A. 資安與可信度 (Tier 1A — 見到就標，P0)
+## A. Security and Credibility (Tier 1A — Flag on Sight, P0)
 
-命中這一帶代表交付缺陷，可能影響資安，或讓使用者對整份文件的可信度打折。
+A hit in this band is a delivery defect that compromises security or invalidates trust in the document.
 
-### A1. 機敏值外洩
+### A1. Secret and Credential Leakage
 
-**徵狀**：交付內容出現真實憑證、密碼、Token、內部主機名、內部帳號、真實單號、真實統一編號、真實供應商代碼、GUID。也包含把 `.env` 內容 `cat`／`grep`／`print` 到工具輸出或 transcript。
+**Symptom**: Deliverable text contains real credentials, passwords, tokens, internal hostnames, internal account names, real order numbers, tax IDs, vendor codes, or GUIDs. Also includes dumping `.env` contents via `cat`, `grep`, `echo`, or `print` into tool output or transcripts.
 
-**為什麼**：這些內容會隨 repo 推向遠端或交付給第三方。一旦進入 git 歷史就很難完全移除，撤銷 commit 也未必來得及。
+**Why**: Deliverables are pushed to remote repositories or handed to third parties. Once a secret enters git history, revoking the commit does not guarantee removal.
 
-**修法**：一律換成語意化佔位符（`C0000001`、`PO000000001`、`<SERVICE_BASE_URL>`、`<PASSWORD>`）。需要確認某個環境變數存在時，只檢查鍵存在不印值。
+**Fix**: Replace every real value with a semantic placeholder (`C0000001`, `PO000000001`, `<SERVICE_BASE_URL>`, `<PASSWORD>`). When verifying that an environment variable exists, check only for key presence without printing its value.
 
-**例外**：無。這一條沒有例外。
+**Exceptions**: None. This symptom has zero exceptions.
 
-**證據**：事前護欄，跨多個專案反覆出現，另有一次事後糾正。問題有兩個入口。一是真實的業務識別碼與主機名被當成示例，寫進產出物與提交訊息。二是為了確認設定而把環境檔的內容印出來：實際發生過一次，受委派的 agent 以文字搜尋讀取環境檔，密碼因此進了對話紀錄。
+**Evidence**: Pre-emptive guardrail recurring across multiple projects, plus one post-hoc correction. The failure has two entry points. First, real business identifiers and internal hostnames were pasted as format examples in deliverables and commit messages. Second, a delegated agent ran a text search across an environment file to verify configuration, dumping live credentials into the conversation transcript.
 
-**偵測**：機械（形狀比對）+ 判讀（是否為真實值）。其中「內部主機名」一項只比對主機名結構，分不出公開文件網域與內部主機，腳本因此把它標為 `[邊界]`：嚴格與放寬情境濾掉，只在加嚴情境浮出，浮出後由人判斷該網域在外部世界存不存在。
+**Detection**: Mechanical (pattern shape) + Semantic judgement (whether the value is live). Because internal hostname detection matches domain structure rather than consulting an external DNS directory, the script tags hostname hits as `[borderline]`: they are filtered out under `Strict` and `Relaxed` profiles and surface only under `Extra-strict`, where a human or agent verifies whether the domain is public.
 
-### A2. AI 署名
+### A2. AI Attribution Signature
 
-**徵狀**：交付內容、commit message、PR 內容出現 `provide by Claude`、`Generated with Claude`、`Co-Authored-By: Claude`、`🤖 Generated with`。
+**Symptom**: Deliverables, commit messages, or PR descriptions contain `"provide by Claude"`, `"Generated with Claude"`, `"Co-Authored-By: Claude"`, or `"🤖 Generated with"`.
 
-**為什麼**：交付物與公司內部溝通紀錄不應標示產生工具。
+**Why**: Engineering deliverables and internal repository records must not advertise the authoring tool.
 
-**修法**：整段刪除，不要改寫成別的說法。
+**Fix**: Delete the entire attribution line or block; do not paraphrase it.
 
-**例外**：說明某個工具或方法論的來源時引用外部 repo、專案或作者名稱，那是引用不是署名。
+**Exceptions**: Citing an external repository, project, or author when documenting the provenance of a tool or methodology is a citation, not an attribution signature.
 
-**證據**：事後糾正，兩次。問題是工具自行在交付內容與 PR 上附加了一段作者沒有寫、也沒有看過的文字。作者審過的是一個版本，送出去的是另一個版本。
+**Evidence**: Post-hoc correction, twice. Tools automatically appended attribution footers to deliverables and pull requests that the human author had neither written nor reviewed, causing the transmitted artifact to diverge from the reviewed text.
 
-**偵測**：機械。
+**Detection**: Mechanical.
 
-### A3. 假成功宣稱
+### A3. Unverified Success Claim
 
-**徵狀**：文件或回報寫「已修復」、「已完成」、「已驗證」、「可運作」，但同一份文件裡指不出對應證據——沒有錯誤訊息原文、沒有回讀結果、沒有截圖、沒有工項的驗證結果欄。也包含把工具回應中的 ⚠️ / ❌ 當成功處理。
+**Symptom**: A document or report claims `"Fixed"`, `"Completed"`, `"Verified"`, or `"Working"`, but provides no corresponding evidence in the same document—no verbatim error output, no read-back payload, no screenshot, and no completed verification section in the work item. Also includes treating tool responses containing ⚠️ or ❌ as successes.
 
-**為什麼**：這是所有徵狀中代價最高的一種。使用者依據「已修復」往下走，錯誤會在更晚、更難追的地方爆出來，而且一旦發生過，之後每一句「已完成」都要重新查證。
+**Why**: This is the highest-cost symptom in the catalog. When a user proceeds on the basis of a false `"Fixed"` claim, the underlying defect surfaces later in a harder-to-diagnose state, and every subsequent completion claim loses credibility.
 
-**修法**：把宣稱降級成實際狀態，並補上證據或明確寫出缺什麼條件才能驗。宣稱與證據必須在同一處看得到。
+**Fix**: Downgrade the claim to the actual verified state, and either attach the verification evidence or state explicitly which precondition is missing to run verification. The claim and its evidence must be inspectable together.
 
-**例外**：無。
+**Exceptions**: None.
 
-**證據**：事後糾正，並因此成為一項專案決策；事前護欄亦反覆出現。問題是驗證走了捷徑：只呼叫底層方法就宣稱修復，而使用者實際經過的那條路徑仍然失敗，同一件事連續三次被獨立的驗證者否定。另外兩個入口是把工具回應裡的警告與失敗標記讀成成功，以及部分項目沒有完成卻回報整體完成。
+**Evidence**: Post-hoc correction that became a permanent architecture decision, reinforced by recurring pre-emptive guardrails. The failure occurred when verification took a shortcut: calling an internal helper succeeded, so the task was reported as fixed while the actual user-facing execution path still failed three consecutive independent verifications. Two related entry points are misreading warning/error glyphs in tool responses as success, and reporting overall completion when sub-items remain unfinished.
 
-**對照**：「已修復，測試通過」而全文找不到測試輸出是命中。「已修復，`pytest -q` 回報 12 passed，輸出見下方區塊」不是命中，證據與宣稱同處。
+**Contrast**: Writing `"Fixed, all tests pass"` without any test output in the document is a hit. Writing `"Fixed; pytest -q reports 12 passed, output attached in the block below"` is not a hit because the evidence accompanies the claim.
 
-**偵測**：判讀。
+**Detection**: Semantic judgement.
 
-### A4. 「未實測」殘留
+### A4. Residual Unverified Status
 
-**徵狀**：能力表格或狀態欄位留著「未實測」、「待確認」、「未知」、「推定支援」、「不確定」、`TBD`、`?`。
+**Symptom**: Capability tables or status fields retain markers such as `"untested"`, `"unverified"`, `"to be confirmed"`, `"status unknown"`, `"assumed supported"`, `"not sure"`, `"TBD"`, or `"?"`.
 
-**為什麼**：能力宣稱只有兩種合法值——已驗證、已知不支援。留一個未知等於把驗證責任推回使用者，而且下一輪讀者無法判斷這格是還沒測，還是測不出來。
+**Why**: A capability claim has only two valid states in a deliverable specification: verified working or verified unsupported. Leaving an unknown marker shifts the verification burden onto the reader, and subsequent maintainers cannot tell whether the capability was never tested or could not be tested.
 
-**修法**：當下就去測。真的測不了，寫清楚卡在哪、缺什麼條件，而不是留一個未知了事。
+**Fix**: Run the verification immediately. If verification is genuinely blocked, document the exact blocker and missing precondition rather than leaving an ambiguous status token.
 
-**例外**：工項的「驗證結果」欄在工項還沒完成前可以是空的或「進行中」——那是流程狀態，不是能力宣稱。
+**Exceptions**: The `"Verification Results"` section of an active work item may remain `"Pending"` or `"In Progress"` while the work item is still open—that tracks workflow state rather than asserting system capability.
 
-**證據**：事後糾正，語氣重，之後成為一項專案的常駐約束。問題是狀態欄與已有的事實脫節：同一份文件的別處已經回報多筆成功，能力表卻仍標示「未實測」。讀者看到兩個互相矛盾的說法，而補上驗證本來是當下就做得到的事。
+**Evidence**: Strongly worded post-hoc correction that became a standing project constraint. The status column drifted out of sync with established facts: elsewhere in the same document multiple successful runs were already recorded, yet the capability matrix still read `"untested"`, leaving the reader with two contradictory claims when live verification was immediately available.
 
-**偵測**：機械。
+**Detection**: Mechanical.
 
-### A5. 本機絕對路徑
+### A5. Local Absolute Path
 
-**徵狀**：會被散佈或交付的內容出現 `/Users/<name>/...`、`C:\Users\<name>\...`、`/home/<name>/...`。
+**Symptom**: Distributed or delivered files contain `/Users/<user>/...`, `C:\Users\<user>\...`, or `/home/<user>/...` with a concrete username.
 
-**為什麼**：安裝者的檔案結構不會與作者相同。Skill 被複製到別人的專案後，絕對路徑一律失效，而且洩漏作者的本機目錄結構。
+**Why**: Another machine or user environment will not share the author's local directory tree. Once a Skill is installed into another repository, hardcoded local paths break and leak the author's filesystem layout.
 
-**修法**：改成相對路徑，或用自然語言描述位置（「專案根目錄下的 `docs/tasks/`」）。除非是官方定義或約定俗成必須綁定的形式。
+**Fix**: Convert to a repository-relative path or describe the location structurally (`"under docs/tasks/ at the repository root"`), unless an official platform specification mandates a fixed path.
 
-**例外**：`harness` 與 `ticket` profile 放寬——開發者導向文件指向本機外部 repo 作為 SoT 是正當用途。`agent-facing` 與 `deliverable` 無例外。
+**Exceptions**: `Relaxed` under `harness` and `ticket` profiles—developer-facing governance files pointing to an external local repository as a Single Source of Truth are legitimate. Zero exceptions under `agent-facing` and `deliverable`.
 
-**證據**：事後糾正，兩次。問題是文件用作者自己機器上的路徑指出位置，換一個人、換一台機器就指不到東西。開發規範文件尤其如此，它本來就是寫給不同環境的人與 agent 共用的。
+**Evidence**: Post-hoc correction, twice. Specifications referenced files using the author's machine-specific path prefix, which broke immediately when read by another developer or agent on a different host.
 
-**偵測**：機械。
+**Detection**: Mechanical.
 
 ---
 
-## B. 形式雜訊 (Tier 1B — 見到就標，P1)
+## B. Formal Noise (Tier 1B — Flag on Sight, P1)
 
-修掉讓文件更好讀，但**命中不代表內容有錯**，也不構成「這份文件不可信」的證據。detect 模式必須與 1A 分開陳列。
+Fixing these makes the document cleaner to read, but **a hit does not mean the content is factually wrong** and does not constitute evidence that the document is untrustworthy. In `detect` mode, list Tier 1B separately from Tier 1A.
 
-### B1. 流水帳與比較新舊
+### B1. Change Narration and Before/After Comparison
 
-**徵狀**：規範文字敘述演進過程而非當前狀態。典型句型：「原本…改為…」、「之前是…現在是…」、「本次調整…」、「已棄用…」、「後來發現…」、「第二輪修正…」、「因為之前…所以現在…」。
+**Symptom**: Normative specification prose narrates how the rule evolved rather than stating what holds now. Typical phrases: `"Originally X, changed to Y"`, `"Previously used X, now uses Y"`, `"In this update..."`, `"Has been deprecated..."`, `"We later found..."`, `"After round two of fixes..."`, `"Because it previously..."`.
 
-**為什麼**：讀者拿到的是考古紀錄而不是規範。他必須先讀完歷史才知道現在該怎麼做，而歷史對他的判斷沒有幫助。這也讓文件每次改動都在長大而不是保持準確。
+**Why**: The reader receives an archaeological log instead of a specification. They must parse obsolete history before discovering what to do today, and every revision bloats the file with historical sediment instead of keeping it current.
 
-**修法**：只寫現在是什麼。歷程屬於工項、`decisions.md` 或 commit message。若舊做法真的需要留存，是為了防止有人走回頭路，那就寫成一條明確的禁令，不是敘述。
+**Fix**: State only what holds today. Change history belongs in work items, `decisions.md`, or commit messages. If an obsolete approach must be mentioned to prevent regression, write it as a direct present-tense prohibition (`"Never use X"`), not a historical narrative.
 
-**例外**：`ticket` profile 放寬，`changelog` profile 略過——工項與 CHANGELOG 的本分就是記錄變更。`pr-commit` 放寬，PR 就是在講改了什麼。
+**Exceptions**: `Relaxed` under `ticket` and `pr-commit`; `Skip` under `changelog`—recording what changed is the core purpose of work items, PRs, and changelogs.
 
-**證據**：事後糾正，本目錄中頻率最高的一類。問題是每一次修改都把修改的經過與修改前的樣子留在規範本文裡。作者當下覺得是在交代脈絡，累積幾輪之後，文件的主體變成修改紀錄，現行規定要從中挑出來。把新知識同步進既有規範時最容易發生。
+**Evidence**: Post-hoc correction—the single highest-frequency symptom in this catalog. Every time a specification was updated, the author left the story of the update and the previous behavior inside the normative body, turning the specification into a cumulative diff log after a few iterations.
 
-**偵測**：機械（句型比對）+ 判讀（是否為必要禁令）。
+**Detection**: Mechanical (phrase matching) + Semantic judgement (whether a prohibition is necessary).
 
-### B2. 括號補述
+### B2. Parenthetical Gloss
 
-**徵狀**：用 `（）` 或 `()` 補充解釋、來龍去脈、附註、自我辯解。例如「設定一律由環境變數注入（之前是寫死在設定檔，因為部署時會被覆蓋所以改掉了）」。
+**Symptom**: Using parentheses `(...)` to tuck in causal explanations, historical backstory, side notes, or self-justification. For example: `"All configuration is injected via environment variables (previously hardcoded in config files, which we removed because deployments kept overwriting them)."`.
 
-**為什麼**：括號內容通常是作者當下的思路，不是讀者需要的資訊。它把一句話拆成主線與旁白，讀者得同時處理兩層。該講就寫成正文，重要到需要記錄就獨立成欄位。
+**Why**: Parenthetical glosses usually capture the author's stream of consciousness rather than structured information for the reader. Splitting a sentence into a main clause and a parenthetical aside forces the reader to parse two tracks at once. If a point matters, state it in a main clause; if it is a recurring attribute, give it a dedicated table column.
 
-**修法**：括號內容三種處理——刪掉、升格成正文句子、或獨立成表格欄位。
+**Fix**: Handle parenthetical content in one of three ways: delete it, promote it to a standalone sentence, or extract it into a dedicated table column.
 
-**例外**：中英對照的術語標註（`核心開發規則 (Constraints)`）、純符號或單位標註、以及必須逐字保留的引用原文。這些是排版不是旁白。
+**Exceptions**: Standard acronym introductions on first use (`"Controlled Natural Language (CNL)"`), bilingual term alignments, unit symbols, and verbatim quoted text. Those are notation, not narrative asides.
 
-**證據**：事後糾正，反覆多次。問題有兩種。一是把來龍去脈塞進括號，例如某個做法被淘汰的原因，正文因此帶著一層讀者用不到的旁白。二是把本該獨立成欄的標記寫在括號裡，表格的資訊藏在儲存格的附註中，無法逐列對齊比較。
+**Evidence**: Post-hoc correction, recurring across multiple sessions. Two failure modes appeared: stuffing historical rationale for retired approaches inside parentheses in the middle of a rule, and hiding structured attributes inside parenthetical notes within table cells where they could not be scanned across rows.
 
-**偵測**：機械（括號內含中英文解釋詞或因果補述標記）+ 判讀（是否為術語對照）。
+**Detection**: Mechanical (parentheses containing explanatory or causal gloss markers) + Semantic judgement (distinguishing acronym/term notation).
 
-### B3. 個人註記殘留
+### B3. Residual Note-to-Self
 
-**徵狀**：`TODO`、`FIXME`、`XXX`、「待補」、「先這樣」、「我猜」、「暫時」、「???」、「等等再說」留在交付文件裡。
+**Symptom**: Leaving draft markers such as `TODO`, `FIXME`, `XXX`, `HACK`, `"fill in later"`, `"for now just"`, `"I guess"`, `"fix later"`, or `"???"` inside a deliverable document.
 
-**為什麼**：這些是寫作過程的暫存標記。留在交付物裡代表沒有人知道它們是還沒做，還是已經做了忘記刪。
+**Why**: These are scratchpad markers from the drafting process. Leaving them in a deliverable makes it impossible for the reader or agent to tell whether the item is still unfinished or was finished without cleaning up the note.
 
-**修法**：當下處理，或依工項紀律建立工項列管並在文件裡改寫成明確的已知限制。不得留下模糊的口頭延後。
+**Fix**: Resolve the item immediately, or open a tracked work item under work item discipline and state the known limitation explicitly in the specification. Never leave informal deferred notes in deliverables.
 
-**例外**：`ticket` profile 放寬——工項的待辦欄位就是要寫待辦。
+**Exceptions**: `Relaxed` under `ticket`—recording pending tasks is the purpose of a work item's checklist.
 
-**證據**：事後糾正加事前護欄。問題是把寫給 agent 執行的設定文件當成自己的工作筆記，待辦、疑問與修改註解直接寫在裡面。讀這份文件的 agent 分不出哪些是指令、哪些是作者留給自己的話。對應的行為規則在 `agent-engineering-discipline`：已知問題當下修復，或立刻建立工項。
+**Evidence**: Post-hoc correction and pre-emptive guardrail. Authors treated agent-facing instruction files as personal scratchpads, leaving open questions and reminders inline where executing agents could not distinguish authoritative directives from author notes-to-self.
 
-**偵測**：機械。
+**Detection**: Mechanical.
 
-### B4. 標題回音
+### B4. Heading Echo
 
-**徵狀**：標題下第一行只是把標題換句話說，之後才進入真正內容。例如 `## 效能` 後面接「效能很重要。」
+**Symptom**: The first sentence beneath a heading merely paraphrases the heading before the real content begins. For example, following `## Performance` with `"Performance is a critical aspect of the system."`
 
-**為什麼**：標題已經做完那件事。回音佔掉讀者第一眼的位置卻不帶資訊。
+**Why**: The heading already established the topic. An echo consumes the highest-attention position in the section while conveying zero information.
 
-**修法**：刪掉回音那一行，直接開始內容。
+**Fix**: Delete the echo line and open directly with the substantive point.
 
-**例外**：無，但只是 P2。
+**Exceptions**: None, though severity is P2.
 
-**證據**：事後糾正。問題是開頭的位置被不重要的內容佔走：一份文件的首段寫的是怎麼取得它，而不是它在講什麼。讀者第一眼拿不到判斷要不要往下讀的資訊。
+**Evidence**: Post-hoc correction. The opening paragraph of a specification spent its first lines restating the title and explaining how the file was generated rather than stating what the specification governs, depriving the reader of an immediate scope signal.
 
-**對照**：`## 效能` 之後接「效能很重要。」是命中；接「查詢在 200 筆以上會退化，門檻與量測方式如下。」不是命中，它給的是這一節要處理的具體問題。
+**Contrast**: Following `## Performance` with `"Performance is important."` is a hit; following it with `"Queries degrade above 200 rows; thresholds and measurement commands follow."` is not a hit because it states the concrete problem governed by the section.
 
-**偵測**：判讀。
+**Detection**: Semantic judgement.
 
-### B5. 文件描述自己
+### B5. Self-Describing Metadiscourse
 
-**徵狀**：句子的主詞是這份文件，不是要做的事。典型形態：「這一節只做兩件事」、「以下將說明」、「本節不重述」、「下面三組窮舉了兩邊的每一項」，以及把章節結構再講一次的前言。
+**Symptom**: Sentences whose grammatical subject is the document or section itself rather than the domain rule or action. Typical phrasing: `"This section only does two things"`, `"The following paragraphs will explain"`, `"This section does not repeat"`, `"The three groups below exhaustively list every item"`, and introductory roadmaps that narrate the section layout.
 
-**為什麼**：結構本來就看得見——標題、清單、表格都在讀者眼前。用一句話再描述一次，佔掉的是版面，給的是零資訊。這類句子還會累積：每加一節就想再導覽一次。
+**Why**: The document's structure is already visible through its headings, lists, and tables. Describing that structure in prose consumes space for zero informational gain, and encourages further metadiscourse every time a section is added.
 
-**修法**：刪掉。前言的位置留給這一節的目的，或直接進入內容。
+**Fix**: Delete the metadiscourse. Use the opening line to state the section's decision criterion or begin directly with the rules.
 
-**例外**：**邊界聲明不算**。「共用骨架見主路徑，本檔只寫本項獨有的部分」這類句子指出了不在此處的內容在哪一份檔案，讀者少了它會以為這份就是全部，兩處也容易長出重複。判準是拿掉那句話之後，讀者會不會誤判範圍：會，就是邊界聲明，留著；不會，就是自述，刪掉。
+**Exceptions**: **Scope boundary declarations are exempt.** A statement such as `"Shared workflow skeleton resides in the main entrypoint; this file specifies only the delta unique to this method"` tells the reader where out-of-scope content lives. Without it, a reader would mistake the current file for the complete workflow or duplicate content across both files. The criterion is `"If this sentence is deleted, will the reader misjudge the boundary of this document?"` If yes, it is a boundary declaration—keep it; if no, it is self-describing metadiscourse—delete it.
 
-**證據**：事後糾正。問題是章節開頭的一段話只重述了標題已經給出的資訊，例如條目的數量，而沒有交代這一節的目的。
+**Evidence**: Post-hoc correction. Section openings restated structural counts already obvious from the subheadings without stating the section's purpose.
 
-**對照**：「這一節只做兩件事：給出位置，補上例外」是命中，刪掉它讀者不會誤判任何範圍。「共用骨架見主路徑，本檔只寫本項獨有的部分」不是命中，刪掉它讀者會以為這份就是全部。
+**Contrast**: `"This section does two things: gives the location and adds exceptions"` is a hit—deleting it causes zero scope confusion. `"Shared workflow skeleton resides in the main entrypoint; this file specifies only the delta"` is not a hit—deleting it misleads the reader into thinking this file is self-contained.
 
-**偵測**：判讀。
+**Detection**: Semantic judgement.
 
-### B6. 標題與內容不相稱
+### B6. Heading-Scope Mismatch
 
-**徵狀**：兩種形態。一是**一個標題底下裝了多個不同主題**，中間沒有標題分隔，讀者無從預期下一段講什麼；二是**標題名稱與內容涵蓋的範圍不符**，標題說的比內容窄或寬。
+**Symptom**: Two forms. First, **a single heading houses multiple distinct topics** without subheadings to separate them, leaving the reader unable to predict what follows. Second, **the heading label does not match the extension of its body text**, promising either a narrower or a broader scope than what is actually written.
 
-**為什麼**：標題是讀者用來決定要不要往下讀、以及讀完之後回頭找的依據。裝了多個主題時，那些主題各自失去可被指向的位置——別處要引用其中一項只能重述一遍，於是長出重複。
+**Why**: Headings are the landmarks readers and agents use to decide whether to read a section and how to link back to a specific rule later. When multiple topics hide under one heading, none of them can be referenced individually, forcing other documents to restate the rule inline and spawning duplicates (`C4`).
 
-**修法**：數這一節有幾個主題。多於一個就各自給標題；標題名稱說不出該節主題就改名。**判準是主題數，不是段數**——摘要是一段，說明理由的章節寫成三段仍是一個主題。
+**Fix**: Count the distinct topics inside the section. If there is more than one, split them under dedicated headings; if the heading title fails to name the topic, rename the heading. **The criterion is the number of topics, not the number of paragraphs**—an abstract is one paragraph, whereas a rationale section spanning three paragraphs about the same mechanism is still a single topic.
 
-**例外**：`changelog` 略過。
+**Exceptions**: `Skip` under `changelog`.
 
-**證據**：事後糾正。問題是一個名為摘要的章節底下有四段，各講一個主題：這個 Skill 管什麼、保護哪些不變量、治理不指定執行方法、規則的兩種強度如何區分。標題承諾的是一段概述，內容卻是四個需要各自被引用的主題。
+**Evidence**: Post-hoc correction. A section titled `"Abstract"` contained four paragraphs covering four distinct topics: what the Skill governs, which invariants it protects, why governance does not dictate execution methods, and how the two modal rule strengths differ. The heading promised a high-level summary while the body buried three standalone normative rules that needed independent citation.
 
-**對照**：`## 摘要` 底下同時講定位、不變量與強度分級是命中，強度分級與摘要無關。`## 情境判定與寬容度` 底下寫判定線索、六個情境的差異、判不出來怎麼辦，不是命中，三段講的是同一件事的三個面向。
+**Contrast**: Placing scope overview, system invariants, and modal strength definitions all under `## Abstract` is a hit because modal strength definitions are not part of an abstract. Placing precedence clues, six-profile differences, and fallback behavior under `## Profile Determination and Tolerance` is not a hit because all three paragraphs address facets of the same decision.
 
-**偵測**：判讀。
+**Detection**: Semantic judgement.
 
 ---
 
-## C. 需要讀懂語意 (Tier 2 — 成群才標，P1)
+## C. Semantic Comprehension (Tier 2 — Flag in Clusters, P1)
 
-單獨一處可能無妨。同一段落或同一節出現兩項以上，就是這一段該重寫。
+A single isolated subtlety may be benign; two or more in the same paragraph or section indicate that the passage must be rewritten.
 
-### C1. 無證據的能力限制宣稱
+### C1. Unevidenced Capability Limitation Claim
 
-**徵狀**：寫「做不到」、「只能由」、「不支援」、「無法」，但指不出證據——沒試過所有相關操作、沒有錯誤訊息原文、沒有工項編號。更嚴重的形式是**已經成功的事被寫成限制**。
+**Symptom**: Writing `"cannot"`, `"unsupported"`, `"only possible via"`, or `"unable to"` without pointing to evidence—no exhaustive test of relevant operations, no verbatim error output, and no work item ID. The most severe form is **misdescribing an already-succeeded operation as a limitation**.
 
-**為什麼**：一條沒有證據的限制會被下游當成事實引用，然後被寫進別的文件、影響架構決策。而且它常常只是「作者沒想到某個操作」。
+**Why**: An unevidenced limitation claim gets cited downstream as an established architectural constraint, distorting design decisions across other documents—when in reality the author simply did not test the right operation.
 
-**修法**：說「做不到」之前，逐一試過所有相關操作。真的辦不到，附上證據並指出卡在哪一層（結構讀不到／候選查不到／被必填擋下）。已經成功的能力必須獨立寫成「可以做」，後續步驟的缺口另外描述，不得用來否定已成立的能力。
+**Fix**: Before writing `"cannot"`, test every relevant operation against the live system or schema. If the limitation is real, attach the verbatim error and identify the exact layer that rejected it (schema unreadable / candidate lookup missing / blocked by required field). Capabilities that already succeeded must be documented positively as working; gaps in downstream steps must be described separately without negating the capability that succeeded.
 
-**例外**：`changelog` 放寬，`pr-commit` 略過。
+**Exceptions**: `Relaxed` under `changelog`; `Skip` under `pr-commit`.
 
-**證據**：事後糾正，語氣重，之後成為一項專案的常駐約束。問題有兩種。一是操作已經成功、當前需求也已滿足，文件仍把它寫成限制，因為後續某一步有缺口，作者就否定了整件事。二是寫下「做不到」之前沒有回頭查現有的工具，那條限制其實是沒有找，不是沒有。
+**Evidence**: Strongly worded post-hoc correction that became a permanent project constraint. Two failure modes occurred: first, an operation succeeded and satisfied the immediate requirement, yet the author documented the feature as unsupported because a subsequent optional step had a gap; second, the author declared a capability impossible without checking existing tools in the workspace.
 
-**對照**：「這個 API 不支援批次寫入」而沒說試過什麼是命中。「批次端點回 405，逐筆寫入可行，錯誤原文見下」不是命中，它指得出證據且沒有否定已成立的能力。
+**Contrast**: Writing `"This API does not support batch writes"` without stating what was tested is a hit. Writing `"The batch endpoint returns HTTP 405; single-record writes succeed; verbatim error attached below"` is not a hit because it cites evidence and preserves what works.
 
-**偵測**：判讀。腳本可標出「做不到／只能／無法」的位置供人工核對，但無法判斷證據是否充分。
+**Detection**: Semantic judgement. The script flags lines containing limitation phrases without inline evidence markers for human review, but cannot judge whether the evidence is sufficient.
 
-### C2. 該結構化卻寫成流水句
+### C2. Unstructured Prose for Enumerable Facts
 
-**徵狀**：能力、限制、步驟、欄位這類本質上可列舉的內容，被擠成一段敘述。例如把一個介面的讀寫能力寫成「建立之後回不出欄位區段，逐欄回讀對這兩種型別做不到，只能由摘要查詢取得部分欄位」，讀者必須自己拆出哪些可以、哪些不可以。
+**Symptom**: Capabilities, limitations, multi-stage workflows, or field specifications—items that are inherently enumerable—are compressed into a continuous prose paragraph. For example: `"After creation the API does not return the field section, field-by-field read-back fails for these two types, and only summary queries return partial fields"`, forcing the reader to mentally untangle what works at each stage.
 
-**為什麼**：讀者需要對照「哪些可以、哪些不可以」，一段敘述迫使他自己拆解。拆解過程就會出錯。
+**Why**: Readers consult capability documentation to compare what works and what does not across stages or types. A prose paragraph forces every reader to reconstruct the state matrix in their head, introducing interpretation errors.
 
-**修法**：拆步驟寫。先想清楚這件事有哪些階段，逐階段標明可做與不可做。狀態用 ✅ / ⚠️ / ❌ 對齊在表格裡。
+**Fix**: Decompose by stage or entity type. Identify the distinct phases or categories first, then tabulate what is supported and unsupported at each stage using ✅ / ⚠️ / ❌ status glyphs in aligned table columns.
 
-**例外**：需要說明理由的段落本來就該用敘述。判準是「這段內容是否在列舉」。
+**Exceptions**: Paragraphs explaining **why** a design choice was made belong in prose. The criterion is `"Is this passage enumerating parallel items or states?"`
 
-**證據**：事後糾正，改過一版仍不符，最後由使用者直接給出版式。問題是一件有多個階段的事，各階段做得到與做不到的程度不同，卻被寫成一段連續的敘述。讀者要的是逐階段對照哪些可以、哪些不可以；附註也混在敘述裡，沒有條列在後。
+**Evidence**: Post-hoc correction that required two revisions before the user supplied the target table layout directly. A multi-stage operation had different support levels at each stage, but was written as a single dense paragraph with caveats mixed inline.
 
-**對照**：把三種欄位型別的讀寫差異擠成一句話是命中，讀者得自己拆。用三列表格各給型別、可否讀、可否寫，不是命中。
+**Contrast**: Packing read/write support differences across three field types into one running sentence is a hit. Presenting a three-column table (`Field Type`, `Readable`, `Writable`) is not a hit.
 
-**偵測**：判讀。
+**Detection**: Semantic judgement.
 
-### C3. 已退役術語復活
+### C3. Revived Retired Terminology
 
-**徵狀**：文件出現專案已明確廢除的名詞，或暗示「已退役」的做法還是一個選項。
+**Symptom**: A document uses terminology that the project has explicitly retired, or implies that a retired mechanism remains an optional fallback.
 
-**為什麼**：退役的意思是「不存在這個選擇」，不是「選擇不用」。文件保留舊術語，下一輪就會有人把它當退路。
+**Why**: Retiring a mechanism means that option no longer exists, not that it is merely discouraged. Leaving retired terms in active specifications invites the next agent or maintainer to revive the dead path as a fallback.
 
-**修法**：整句改寫成當前唯一做法。連「我們不用 X」這種提及都要評估是否必要——不必要就連提都不提。
+**Fix**: Rewrite the sentence to state only the current canonical mechanism. Evaluate whether even negative mentions (`"We no longer use X"`) are necessary—if not required to prevent an active regression trap, remove the mention entirely.
 
-**例外**：`ticket` 與 `changelog` 可以寫「為何退役」，那是紀錄。
+**Exceptions**: `Relaxed` under `ticket` and `pr-commit`; `Skip` under `changelog`—historical records may explain why a term or mechanism was retired.
 
-**證據**：事後糾正，同一問題歷經多輪仍有殘留。問題是做法已經退役，文件卻還留著它的名稱與描述，讀起來像一個仍可選擇的方案。清理做了幾輪，每一輪都還找得到沒清乾淨的文件。
+**Evidence**: Post-hoc correction across multiple cleanup rounds. Even after a mechanism was officially retired, residual mentions across reference files made it read like a valid secondary option, requiring repeated sweeps to eradicate.
 
-**偵測**：機械，需以 `--terms` 提供專案的退役術語清單。
+**Detection**: Mechanical via `--terms <file>` supplying the project's retired terminology list.
 
-### C4. 規則重複散落
+### C4. Scattered Duplicate Rules
 
-**徵狀**：同一條規則的內容出現在兩個以上檔案，而不是一處定義、其他處連結。**逐字重複與改寫後的重述都算**——換句話說不會讓第二份變成另一條規則，只會讓兩份更難比對。
+**Symptom**: The substance of a single rule appears in two or more files instead of being defined in one canonical source and linked from elsewhere. **Both verbatim copies and paraphrased restatements count**—rewording a duplicate does not make it a distinct rule; it only makes divergence harder to spot.
 
-**為什麼**：兩份副本一定會不同步，然後兩個 Agent 讀到不同版本。這在盤點中是出現最多的結構性問題。
+**Why**: Two copies of a rule inevitably drift out of sync, causing different agents to follow conflicting instructions depending on which file they loaded. In repository audits, this is the single most common structural defect.
 
-**修法**：先判斷這條規則的正確歸屬層級，把內容留在那一層，其他地方改成連結。
+**Fix**: Determine which architectural layer owns the rule, keep the canonical text in that single file, and replace every other occurrence with a markdown link.
 
-**例外**：`ticket` 與 `changelog` 略過。
+**Exceptions**: `Skip` under `ticket`, `changelog`, and `pr-commit`.
 
-**證據**：事後糾正。問題是同一條規則散在多個檔案，沒有一處被指定為正本。處理時只刪掉重複不夠：每一組都要列出全部出現位置，並判斷它該歸在哪一層，否則留下來的那一份可能放錯地方。
+**Evidence**: Post-hoc correction. The same constraint was copied across multiple files without designating a single canonical source. Remediating it required inventorying every occurrence and deciding its proper layer before deleting duplicates, lest the surviving copy remain in the wrong file.
 
-**偵測**：機械（跨檔重複行）+ 判讀（歸屬層級）。
+**Detection**: Mechanical (exact cross-file duplicate lines via `scan_duplicates`) + Semantic judgement (paraphrased duplicates and canonical layer ownership).
 
-### C5. 摘要掉錯誤原文
+### C5. Summarized Away Verbatim Error
 
-**徵狀**：回報或工項裡寫「工具回報失敗」、「被伺服器擋下」，而沒有逐字貼出錯誤訊息。
+**Symptom**: A report or work item states `"The tool returned an error"` or `"The server rejected the request"` without quoting the verbatim error message.
 
-**為什麼**：錯誤原文是後續除錯的唯一依據。摘要過的錯誤等於把判斷權從使用者手上拿走，而且摘要通常會丟掉關鍵欄位名。
+**Why**: Verbatim error output is the primary observational evidence for debugging. Summarizing an error strips away status codes, field names, and stack context, taking diagnostic judgement away from the user.
 
-**修法**：完整貼出原文，並明確指出是哪一層失敗。
+**Fix**: Paste the verbatim error message and identify the exact layer where the failure occurred.
 
-**例外**：原文含機敏值時，只替換機敏部分為佔位符，其餘逐字保留。
+**Exceptions**: When the raw error contains live secrets, mask only the secret substrings with semantic placeholders (`<PASSWORD>`, `<TOKEN>`) and preserve the rest verbatim.
 
-**證據**：事前護欄，反覆出現。問題是失敗與回讀的結果被轉述成一句結論，判斷所需的原文沒有交回來。使用者因此在交派時反覆預先要求：錯誤訊息逐字貼出，回讀內容逐欄位貼出。
+**Evidence**: Recurring pre-emptive guardrail. Delegated agents repeatedly paraphrased tool failures and read-back payloads into one-line summaries, forcing the user to mandate verbatim error and field-level read-back pasting in every delegation prompt.
 
-**對照**：「工具回報失敗，已改用其他方式」是命中。「工具回報 `ConnectionRefused: port 8080`，已改用其他方式」不是命中。
+**Contrast**: Writing `"The tool failed, so we switched to an alternative"` is a hit. Writing `"The tool returned ConnectionRefusedError: [Errno 61] Connection refused on port 8080, so we switched to..."` is not a hit.
 
-**偵測**：判讀。
+**Detection**: Semantic judgement.
 
-### C6. 臆測填空
+### C6. Speculative Filling
 
-**徵狀**：文件寫出沒有查證過的欄位名、按鈕名、控制項名、代碼、單號、參數形狀。包含自創看起來合理的鍵名。
+**Symptom**: A document states field names, button labels, UI control names, status codes, order numbers, or parameter shapes that were never verified against the authoritative source—including plausible-looking keys invented by the author.
 
-**為什麼**：臆測值會被當成契約使用，然後在 runtime 炸開。而且讀者無法從文件分辨哪些是查證過的、哪些是猜的。
+**Why**: Speculative identifiers get treated as real contracts by downstream code and fail at runtime. Readers cannot tell from the prose which identifiers were verified against the schema and which were guessed.
 
-**修法**：先呼叫源頭結構查詢取得真實值。查不到就停在那裡回報「查不到」，不要繞道自行補值。
+**Fix**: Query the authoritative schema source first. If the schema cannot be retrieved, stop and report `"Unable to verify schema"` rather than guessing a plausible identifier.
 
-**例外**：明確標示為範例且不會被當契約引用的示意值。
+**Exceptions**: Placeholder values explicitly marked as illustrative format examples that cannot be mistaken for live schema contracts.
 
-**證據**：事前護欄，跨專案高頻。問題是查不到真實值時不停下來，而是補一個看起來合理的值繼續做。介面元件的名稱、選項的代碼、測試用的識別碼都發生過。補上的值形式正確，送出之前沒有任何訊號顯示它是編的。對應的行為規則是 `agent-engineering-discipline` 的 Core Rule 07。
+**Evidence**: High-frequency pre-emptive guardrail across projects. When an agent could not immediately read a schema, it guessed plausible-looking field names, option codes, or test IDs and proceeded—producing syntactically valid artifacts that failed on execution. This directly maps to Core Rule 07 in `agent-engineering-discipline`.
 
-**對照**：憑印象寫出某個欄位名而未查過 Schema 是命中。標記「此欄位名未查證，待確認來源」不是命中，未知被標成未知。
+**Contrast**: Writing an unverified field name from memory as if it were part of the API schema is a hit. Writing `"Field name unverified; blocked pending schema access"` is not a hit because the unknown is explicitly surfaced.
 
-**偵測**：判讀。
+**Detection**: Semantic judgement.
 
-### C7. 開發者術語滲入交付物
+### C7. Developer Jargon Leaked into Deliverables
 
-**徵狀**：交付給最終使用者或 agent 執行用的內容夾帶開發者維運訊息——決策編號（`AD-00xx`、`HD-00xx`）、工項編號（`TASK-…`）、同步狀態、`.claude/`、`Harness`、本機環境代稱、內部工具鏈名稱。
+**Symptom**: Deliverables intended for end users or business-domain agents contain internal harness maintenance metadata—decision IDs (`AD-00xx`, `HD-00xx`), work item IDs (`TASK-...`), sync statuses, `.claude/`, `.agents/`, `Harness`, local machine aliases, or internal validator names.
 
-**為什麼**：產出物的讀者沒有這些上下文。對 agent 而言這些是雜訊，會稀釋它真正需要的業務知識與護欄。
+**Why**: End users and domain-execution agents lack the repository governance context. To a business agent, internal governance IDs are noise that dilutes domain instructions and guardrails.
 
-**修法**：改成對外的正式描述，或直接刪除。維運資訊留在 `decisions.md` 與工項。
+**Fix**: Replace internal jargon with formal domain descriptions or delete it outright. Keep governance metadata inside `decisions.md` and `docs/tasks/`.
 
-**例外**：`harness` 與 `ticket` profile 略過——開發者導向文件本來就該引用決策編號。
+**Exceptions**: `Skip` under `harness` and `ticket`—developer-facing governance specifications and work items legitimately cite decision and work item IDs.
 
-**證據**：事前護欄，已成為一項專案的常駐約束。問題是給 agent 執行任務用的內容，與開發這份內容時的維運資訊，寫在同一份文件裡。執行任務的 agent 需要的是業務知識、話術與護欄；決策編號、隱藏目錄與本機路徑對它沒有用處，卻佔用它的注意力。
+**Evidence**: Pre-emptive guardrail that became a standing project constraint. Authors mixed domain execution instructions for business agents with internal maintenance notes about how the Skill itself was refactored, cluttering the executing agent's context window.
 
-**偵測**：機械（術語命中）+ 判讀（是否為正當引用）。
+**Detection**: Mechanical (jargon token matching) + Semantic judgement (whether a citation is legitimate in context).
 
-### C8. 專案特定事實滲入通用規範
+### C8. Project-Specific Facts Leaked into Shared Rules
 
-**徵狀**：要被多個專案共用的規範文字裡，出現只有某一個專案才存在的名字——工具名、API 名、端點名、狀態值、欄位名、業務名詞、特定 Agent 平台或 CLI 的名稱、專案名、repo 名、決策編號、工項編號。
+**Symptom**: A general specification intended for reuse across multiple repositories contains identifiers that exist only inside one specific project—internal tool names, API endpoints, custom status enums, database column names, business domain nouns, specific agent platform CLI names, project names, repo names, decision IDs, or work item IDs.
 
-**為什麼**：這類洩漏的來源固定——規則是從某次真實工作階段裡萃取出來的，萃取時那個專案的工具名剛好在上下文裡，就順手寫了進去。當下讀起來很具體、很有說服力，安裝到別的專案才發現那是一句無法執行的指令：他的環境裡沒有那個東西。比起講得太抽象，講得太具體更難發現，因為它看起來像「基於事實」。
+**Why**: General rules are typically distilled from a concrete debugging session in a specific project. When the source project's tool name or status enum slips into the distilled rule, the rule looks concrete and authoritative in its home repo but becomes unexecutable the moment the Skill is installed into another project that lacks that tool. Over-specific leakage is harder to spot than vague prose because it masquerades as fact-based writing.
 
-**修法**：把名字換成它扮演的角色，並補上判準。「先呼叫 `get_order_schema`」改成「先向源頭取得結構定義」，再定義什麼算源頭、什麼不算。狀態值改成語意類別，「只能用 `Cancel`」改成「只能使用該系統提供的可逆狀態轉換」。
+**Fix**: Replace the project-specific identifier with its structural role and state the decision criterion. Change `"Call get_order_schema first"` to `"Query the authoritative schema source first"`, then define what qualifies as an authoritative source. Change `"Only use the Cancel status"` to `"Only use a reversible state transition provided by the target system"`.
 
-**例外**：公開標準與規格可以具名，因為它們不隨專案改變——`OpenAPI`、`JSON Schema`、`JSON-RPC`、`git`、`Nygard ADR`、`YAML Frontmatter`。範本檔（`assets/`）裡的編號與欄位值是格式示例，不受此限。
+**Exceptions**: Public standards and universal specifications may be named directly because they are invariant across projects (`OpenAPI`, `JSON Schema`, `JSON-RPC`, `git`, `Nygard ADR`, `YAML Frontmatter`). Illustrative identifiers inside `assets/` templates are format examples and are exempt.
 
-**判準**：每個專有名詞都要能回答「這個名字在任何安裝本規範的專案裡都存在嗎」。答案是否就得換掉。
+**Criterion**: The criterion is `"Does this identifier exist in every repository that installs this specification?"` If the answer is no, replace it with its structural role.
 
-**證據**：事後糾正。問題是通用規則從某一次工作階段萃取而來，那次工作階段的專有名詞跟著進了規則：寫死的狀態值、特定命令列工具的名稱，以及引用文字裡夾帶的個人帳號。這些名字在來源專案裡是事實，放進通用規範就成了與規範無關的內容。規則版見 `agent-engineering-discipline` 的 Core Rule 11。
+**Evidence**: Post-hoc correction. When general engineering rules were extracted from a project session, hardcoded status values, specific CLI tool names, and personal account names rode along into the shared rule files. The normative counterpart is Core Rule 11 in `agent-engineering-discipline`.
 
-**對照**：通用規則裡寫死某個專案才有的狀態值是命中。改寫成「該系統定義的待審狀態」不是命中。
+**Contrast**: Hardcoding a project-internal status enum in a cross-project rule is a hit. Writing `"the pending-review state defined by the target workflow"` is not a hit.
 
-**偵測**：判讀。
+**Detection**: Semantic judgement.
 
-### C9. 導覽夾帶內容
+### C9. Navigation Carrying Target Content
 
-**徵狀**：索引、目錄或路由表的欄位放的是被指向內容的摘要，而不是名稱與位置。最常見的形態是把每個目標的小節標題串接成一格。
+**Symptom**: Cells in an index, directory, or routing table contain a summary of the target file's contents rather than its name, path, and routing scope. The most common form is concatenating all subheadings of the target file into a single table cell.
 
-**為什麼**：導覽的作用是讓人找到東西，不是替代閱讀。摘要一旦寫進導覽就成為第二份正本，目標改了它不會跟著改；而且把縱向的清單改成橫向的清單，密度更高、更難讀。
+**Why**: The job of navigation is to help the reader locate the right file, not to replace reading it. Once a content summary is embedded in a routing table, it becomes a second copy of the rule that drifts out of sync when the target file changes, while turning a vertical list of headings into a dense horizontal wall of text.
 
-**修法**：一列只給名稱、位置與一句範圍。需要讓讀者判斷該不該進去時，給的是判斷依據——什麼情況下會用到它——而不是它裡面有什麼。
+**Fix**: Give each routing row only the name, link, and a one-line scope boundary stating **when to load the file**, not what rules the file contains inside.
 
-**例外**：`changelog` 略過。單一檔案內的章節目錄只列標題與頁內位置時不算，那本來就沒有第二份內容。
+**Exceptions**: `Skip` under `changelog`. A table of contents at the top of a single file that lists only section headings and anchor links is exempt because it contains no duplicate prose.
 
-**證據**：事後糾正，語氣重。問題出現在一次重構之後的導覽表：每一格是把目標檔案的所有小節標題橫向串接，右欄又重述了另一節已經指派過的對應關係。表格看起來資訊完整，實際上是把目標內容抄成一份摘要，重構要消除的重複反而增加。
+**Evidence**: Strongly worded post-hoc correction. After a refactoring pass, a routing table concatenated every subheading of each target file into its summary column while repeating cross-mappings already stated in another section—multiplying duplication in the exact refactoring meant to eliminate it.
 
-**對照**：「事實查證、目標優先於現況推斷、該問的時候問、一次問完」是命中，那是目標檔案的四個小節標題。「自己判斷與回頭問的界線」不是命中，它給的是讀者決定要不要進去所需的範圍。
+**Contrast**: Writing `"Fact verification, goal priority over current state, asking when ambiguous, batching questions"` in a routing cell is a hit because it copies the target file's four subheadings. Writing `"Boundary between autonomous judgement and asking the user"` is not a hit because it states the routing scope needed to decide whether to open the file.
 
-**偵測**：判讀。
+**Detection**: Semantic judgement.
 
-### C10. 跨檔不一致
+### C10. Cross-File Inconsistency
 
-**徵狀**：同一件事在兩處的說法互相矛盾。三種形態：直接矛盾，兩處明白說了相反的話；間接矛盾，兩處各自成立但合起來推不出一致的結果；與公認事實矛盾，文件寫的與該領域的既有定義相反。
+**Symptom**: Two places in the repository make mutually contradictory claims about the same subject. Three forms: direct contradiction (two passages assert opposite rules), indirect contradiction (two passages each look valid in isolation but cannot both hold simultaneously), and contradiction with established domain facts.
 
-**為什麼**：讀者無從判斷哪一處作數，而兩處都是正本。與 C4 的差別在於 C4 是同一句話出現兩次，本條是兩句話彼此打架——C4 不修不會讓人做錯，本條會。
+**Why**: When two canonical files disagree, neither humans nor agents can tell which one governs. Unlike `C4` (where the same sentence appears twice), `C10` means two sentences actively conflict—`C4` risks future drift, whereas `C10` causes immediate execution errors today.
 
-**修法**：先判定哪一處是正本，另一處改成連結。兩處都對但適用條件不同時，把條件寫進去，不要留給讀者猜。
+**Fix**: Determine which file is the Canonical Source (SSOT), update it to the verified rule, and replace the conflicting passage in the other file with a pointer. If both claims are valid under different conditions, make the partitioning condition explicit in the canonical rule rather than leaving the reader to guess.
 
-**例外**：`ticket` 與 `changelog` 放寬，那兩種情境本來就會並列不同時期的說法。
+**Exceptions**: `Relaxed` under `ticket` and `changelog`, which legitimately record before-and-after states across time.
 
-**證據**：外部研究。RFCScope 對 273 筆已驗證的技術勘誤分類，不一致佔 202 筆、未規定佔 37 筆——**不一致是規範文件最大宗的缺陷型態**，而非寫得不夠詳細。落差在於該研究的對象是網路協定規格，本目錄的對象是 Harness 與 Skill 文字，此處只採用「不一致值得獨立成條」這個結論。
+**Evidence**: External research. RFCScope categorized 273 verified technical errata across IETF RFC specifications and found that inconsistency accounted for 202 errata while under-specification accounted for 37—**inconsistency is the dominant defect class in normative specifications**, far outweighing lack of detail. **Gap**: RFCScope measured network protocol RFCs rather than Agent Harness and Skill specifications; we adopt only the structural conclusion that cross-file inconsistency warrants a dedicated catalog entry.
 
-**偵測**：判讀。腳本抓得到完全重複的行，抓不到兩句互相矛盾。
+**Detection**: Semantic judgement. The script detects identical duplicate lines (`C4`) but cannot detect semantic contradiction between two differently worded sentences.
 
-### C11. 同一概念多個名字
+### C11. Multiple Terms for One Concept
 
-**徵狀**：同一個東西有兩個以上的稱呼，且未聲明它們是同義。也包含首次出現的專有名詞沒有界定就直接使用。
+**Symptom**: Referring to the same entity or concept by two or more different names without declaring them synonymous, or introducing a domain-specific term on first use without defining it.
 
-**為什麼**：讀者要先建立對照表才能讀下去，而他建的表未必和作者的一樣。名字一多，規則就無法互相引用——你不知道這一條講的那個東西是不是另一條講的那個。
+**Why**: When terminology drifts across paragraphs, the reader must mentally construct an alias table—and their table may not match the author's. Uncontrolled synonyms also break cross-referencing across rules because an agent cannot tell whether Term A in Rule 3 is the same entity as Term B in Rule 9.
 
-**修法**：選一個名字，其餘全部改掉。需要保留舊稱讓既有讀者找得到時，在首次出現處寫明兩者相同，不要散在各處。
+**Fix**: Lock a single canonical term per concept (`One Concept, One Term`) and replace every variant across the suite. When an older alias must be mentioned once so existing users can locate it, declare the equivalence at first mention and use only the canonical term thereafter.
 
-**例外**：引用他人原句時保留原文用詞。
+**Exceptions**: Verbatim quotes from external sources retain their original wording.
 
-**證據**：外部研究加本倉庫實例。RFCScope 的未規定類中「未定義術語」獨立成一個子類；本倉庫發生過兩次——追蹤單位同時叫票、票據、任務票，以及產出物與交付物被當成同義詞，而兩者在業界是包含關係。
+**Evidence**: External research plus two repository corrections. RFCScope identified `"undefined terminology"` as a distinct errata subclass; within this repository, work items were previously called `"tickets"`, `"issues"`, and `"task cards"` interchangeably, and `"artifact"` and `"deliverable"` were used as synonyms despite having a strict superset-subset relationship in software engineering.
 
-**偵測**：判讀。
+**Detection**: Semantic judgement.
 
-### C12. 同義反覆與非操作型定義
+### C12. Tautological and Non-Operational Definitions
 
-**徵狀**：定義概念時使用待定義詞本身或其同義覆述，例如「工項管理就是妥善管理工項」；或僅給出「高品質程式碼」、「結構清晰」、「邏輯自洽」等抽象形容詞，未給出鄰近的屬與本質區分特徵，亦未包含可觀察、可驗收的操作步驟。
+**Symptom**: Defining a concept by repeating the term itself or a near-synonym (`"Work item management means properly managing work items"`), or relying on abstract adjectives (`"high-quality code"`, `"clear structure"`, `"logically self-consistent"`) without stating the proximate genus, specific differentia, and observable verification steps.
 
-**為什麼**：同義反覆造成假性完整，讀者無法獲得任何可判定的依據，導致驗收淪為自由心證。操作型定義缺席時，「符合規格」與「不符合規格」在執行上失去區別。
+**Why**: A tautology creates the illusion of a specification while providing zero decision power, reducing acceptance review to subjective opinion. Without an operational definition, `"compliant"` and `"non-compliant"` are indistinguishable in practice.
 
-**修法**：重構為「屬（上位概念）+ 種差（本質差異）」並補上可重複檢驗之操作型定義，明確指出透過什麼指令、什麼輸入、觀察什麼輸出或狀態轉換來確認成立。
+**Fix**: Rewrite the definition using **Genus (parent category) + Differentia (distinguishing invariant)** paired with a repeatable **Operational Definition** that specifies what command or inspection to run, on what input, and what observable output or state transition confirms compliance.
 
-**例外**：業界公認已具備外部標準之通用術語。
+**Exceptions**: Industry-standard terms already governed by an unambiguous external specification.
 
-**證據**：理論基礎加事後糾正。理論依據是亞里斯多德的種差定義論與 Bridgman 的操作型定義。實際發生的問題是被要求給出定義或判準時，交回來的是原句換一種說法，或一條抽象原則，拿它判定不了任何具體情況是否符合。
+**Evidence**: Theoretical grounding reinforced by post-hoc corrections. Grounded in Aristotelian genus-differentia definition and Bridgman's operationalism. In practice, when asked to define a criterion, drafts repeatedly returned circular paraphrases or abstract slogans that could not adjudicate any concrete edge case.
 
-**對照**：「清晰的驗收條件就是讓大家看得清楚的條件」是命中。「驗收條件是動手前寫定、逐條寫成不必判讀就能核對是否滿足的條列清單」不是命中。
+**Contrast**: Defining acceptance criteria as `"Clear acceptance criteria are criteria that make requirements clear to everyone"` is a hit. Defining them as `"Acceptance criteria are a line-by-line checklist locked before implementation that an evaluator can verify as passed or failed without redoing the task"` is not a hit.
 
-**偵測**：判讀。
+**Detection**: Semantic judgement.
 
-### C13. 道義模態混淆
+### C13. Deontic Modality Confusion
 
-**徵狀**：不可逆、涉及資安或影響第三方的【硬約束】使用了「盡量/建議/適當/原則上」（過寬）；或具備情境裁量空間的【判準】使用了「必須/一律/嚴禁」（過死）。包含同一強度未採用固定關鍵詞，導致約束力解讀混亂。
+**Symptom**: Phrasing an irreversible, security-critical, or third-party-impacting `[Hard Constraint]` with weak hedges (`"try to"`, `"we recommend"`, `"where appropriate"`, `"in principle"`), or phrasing a context-dependent `Criterion` with absolute imperatives (`"must always"`, `"strictly prohibited"`). Also includes rotating between different modal keywords for the same obligation strength.
 
-**為什麼**：硬約束過寬會引發災難性不可逆操作（如誤刪檔案或外洩機敏）；判準過死會導致 Agent 在不適用的情境僵化執行而製造次生錯誤。道義模態混淆會摧毀整份規範的嚴密性。
+**Why**: Weakening a hard constraint invites catastrophic irreversible actions (such as unrecoverable file deletion or secret leakage); over-hardening a context-dependent criterion forces agents to execute rules blindly in contexts where an exception applies, causing secondary failures. Modal confusion destroys the normative precision of the entire specification.
 
-**修法**：對齊 RFC 2119 道義邏輯——硬約束一律使用祈使句與「必須 / 不得」；判準一律改寫為「判準是『...』」，說明判定依據並附帶情境與失敗形態對照表。
+**Fix**: Align strictly with RFC 2119 deontic logic and Core Rule 10: every `[Hard Constraint]` uses direct imperatives (`"Must..."`, `"Never..."`); every `Criterion` uses the fixed pattern `"The criterion is '...'"`, stating the decision boundary paired with a failure-mode contrast table.
 
-**例外**：對話範本與話術示例。
+**Exceptions**: Conversational scripts and user-facing dialogue examples.
 
-**證據**：規範起草學加本倉庫實例。理論依據是道義模態與 RFC 2119。實際發生的問題有三種：所有規則寫成同一種強度，讀者分不出哪幾條違反後無法挽回；一條硬約束被寫成建議的語氣；同一強度換用幾個不同的詞，讀者以為強度有別而去猜哪個更重。對應的行為規則是 `agent-engineering-discipline` 的 Core Rule 10。
+**Evidence**: Normative drafting theory plus repository corrections. Three failure modes occurred in practice: writing every rule at identical modal strength so readers could not tell which violations were irreversible; phrasing a hard safety boundary as a polite suggestion; and rotating modal verbs so readers tried to guess a nonexistent hierarchy of obligation.
 
-**對照**：「建議不要使用 rm -rf」是命中（硬約束被降級為建議）。「【硬約束】不得使用 rm -rf」不是命中。
+**Contrast**: Writing `"We recommend avoiding rm -rf"` is a hit because an irreversible safety boundary is downgraded to a suggestion. Writing `"[Hard Constraint] Never run rm -rf"` is not a hit.
 
-**偵測**：判讀。
+**Detection**: Semantic judgement.
 
 ---
 
-## D. 密度類 (Tier 3 — 到密度才標，P2)
+## D. Density and Formatting (Tier 3 — Flag by Density, P2)
 
-正常用字被過量使用。只在佔比明顯偏高時標，且一次標整段而不是逐字挑。
+These involve normal words or symbols used in excess. Flag only when density across the file exceeds the calibrated threshold, and flag the passage as a whole rather than nitpicking isolated occurrences.
 
-### D1. 模糊量詞與填充詞
+### D1. Vague Quantifiers and Filler Words
 
-**徵狀**：「相關」、「之類」、「等等」、「適當」、「盡量」、「某種」、「一些」、「大概」密集出現。
+**Symptom**: High-density accumulation of hedges and vague fillers such as `"etc."`, `"and so on"`, `"appropriate"`, `"properly"`, `"as much as possible"`, `"some kind of"`, `"certain"`, `"roughly"`, `"basically"`, or `"in principle"`.
 
-**為什麼**：規範文字的價值在可執行。「適當處理」無法執行，讀者只能自己猜一個標準。
+**Why**: The value of a specification lies in its executability. `"Handle appropriately"` cannot be executed; the reader is forced to invent their own threshold.
 
-**修法**：換成具體條件、數字或明確的判準。真的沒有明確標準，就寫出「由誰判斷」。
+**Fix**: Replace vague fillers with concrete conditions, numeric thresholds, or an explicit `Criterion`. Where no deterministic threshold exists, state explicitly **who makes the call**.
 
-**例外**：使用者自己寫下的原話與話術範例，保留原有口吻。
+**Exceptions**: Verbatim user quotes and conversational dialogue templates preserve their original phrasing.
 
-**證據**：事後糾正。問題是文字在簡潔與具體之間失衡：該給細節的地方被縮成籠統的說法，讀者拿不到可以執行的內容。
+**Evidence**: Post-hoc correction. Drafts traded away concrete boundaries for vague generalizations, leaving readers without actionable rules.
 
-**外部依據**：填充詞禁令在六個模型、七項推理任務、15,600 次試驗中測得最大效果，優於理論更深的語言約束，四種條件的效果與理論深度完全反序（arXiv:2604.02699，2026）。**落差**：該研究測的是模型在被禁用填充詞時的推理表現，本條測的是文件內的填充詞密度，兩者不是同一件事。因此**分級維持 P2 不變**，此處只記錄外部證據存在，待本套件自己的行為驗證再議。
+**External basis**: A prohibition on filler words yielded the largest reasoning improvement across six models, seven reasoning tasks, and 15,600 trials, outperforming deeper theoretical linguistic constraints in inverse order to theoretical complexity (`arXiv:2604.02699`, 2026). **Gap**: That study measured model reasoning accuracy when forbidden from generating filler tokens, whereas this symptom measures filler word density inside static specification files. Because those two targets are distinct, **severity remains P2**, and the external study is noted only as background context rather than grounds for promotion.
 
-**偵測**：機械（密度計算）。
+**Detection**: Mechanical (density calculation per 1,000 characters).
 
-### D2. emoji 密度
+### D2. Emoji Density
 
-**徵狀**：文件內 emoji 過量，或標題行帶 emoji。
+**Symptom**: Excessive decorative emojis across prose paragraphs or section headings.
 
-**為什麼**：交付文件的視覺重點應該由結構承擔。emoji 過量之後就不再有強調效果。
+**Why**: Visual hierarchy in a technical specification belongs to its structural headings, lists, and tables. Once decorative emojis proliferate, they lose all emphasis value and add visual noise.
 
-**修法**：刪到適度。
+**Fix**: Strip decorative emojis down to zero or near-zero in prose.
 
-**例外**：表格中的 ✅ / ⚠️ / ❌ 狀態標記不算，那是結構化資訊，而且是使用者明確要求的形式。
+**Exceptions**: Structural status glyphs inside tables (✅ / ⚠️ / ❌) are exempt—they encode discrete state values in capability matrices and are explicitly required by the suite's formatting conventions.
 
-**證據**：事後糾正。問題是文件裡的 emoji 多到蓋過結構，使用者要求降到適度。
+**Evidence**: Post-hoc correction where decorative emojis crowded out structural hierarchy and the user requested reducing them.
 
-**偵測**：機械。
+**Detection**: Mechanical (density per 1,000 characters excluding table status glyphs).
 
-### D3. 條列標籤用句號
+### D3. Period Inside Bold List Label
 
-**徵狀**：條列項目開頭是短標籤並以句號結尾，接著另起一句說明。例如 `- **驗證方式。** 逐欄回讀核對。`
+**Symptom**: A bulleted list item opens with a short bold label ending in a period, followed by a sentence fragment or explanation—for example: `- **Verification method.** Check each field by reading it back.`
 
-**為什麼**：句號讀起來像一句完整的話結束了，接著那句卻在延續它。冒號才是「以下是這個標籤的意思」。
+**Why**: A period signals the syntactic end of a complete sentence, whereas a short noun label is introducing the clause that follows. A colon (`:`) or em dash (`—`) properly binds the label to its definition.
 
-**修法**：句號改冒號。
+**Fix**: Replace the period inside the bold label with a colon (`- **Verification method:** Check each field...`).
 
-**例外**：標籤本身就是一個完整句子時，句號是正確的。腳本只抓**粗體**標籤形式——未加粗的開頭片段常是完整句子（「重新執行測試。若…」），中文動詞偵測不可靠，無法用正則分出標籤與句子，因此收斂到誤判最低的強形式。未加粗的形式仍由判讀處理。
+**Exceptions**: When the bold span is itself a complete grammatical sentence, a period is valid. The mechanical detector targets only **bold** short labels (`^\s*[-*+]\s+\*\*([^*。：:\n]{1,30})[。.]\*\*\s*\S`) because unbolded list openings are frequently complete imperative sentences (`"- Run the test suite. If it fails..."`) that cannot be separated from noun labels by regex without a part-of-speech parser. Unbolded forms remain under semantic judgement.
 
-**證據**：無直接糾正。本條由方法論來源的 List-label periods 一項引入，並改寫成中文標點的形式。它是 Tier 3 中唯一不出自實際糾正紀錄的徵狀，據此保守設為 P2。
+**Evidence**: Adapted from the `"List-label periods"` pattern in the upstream `avoid-ai-writing` methodology. Because it is the only Tier 3 symptom not derived from a direct user correction in this repository, it is conservatively assigned to P2.
 
-**偵測**：機械。
+**Detection**: Mechanical.
 
-### D4. domain 細節過深（僅 `pr-commit`）
+### D4. Excessive Domain Implementation Detail (`pr-commit` profile only)
 
-**徵狀**：commit message 或 PR 內容以程式邏輯或 domain 細節為主體，標題冗長。
+**Symptom**: A commit message or pull request description focuses primarily on low-level code mechanics or internal domain plumbing, paired with an overly long title.
 
-**為什麼**：PR 的讀者是同事，他要先知道「這次改了什麼、為什麼」，程式細節是輔助。
+**Why**: The primary reader of a PR description is a teammate reviewing the change; they need to grasp **what changed and why** at a glance before diving into implementation mechanics in the diff.
 
-**修法**：條列式、淺白、說明變更了什麼。標題用英文並保持簡短。不以程式邏輯為主體。
+**Fix**: Use concise, accessible bullet points stating what changed and what problem it solves. Keep the commit/PR title short and high-level; leave internal class and cursor mechanics out of the title.
 
-**例外**：無。
+**Exceptions**: None under `pr-commit`. `Skip` under `harness`, `agent-facing`, `deliverable`, and `ticket`.
 
-**證據**：事後糾正，三次。問題是 commit message 與 PR 內容被寫成實作說明，以程式邏輯與領域細節為主體。讀的人要先看懂實作，才知道這個變更做了什麼。
+**Evidence**: Post-hoc correction, three times. Commit messages and PR descriptions were written as line-by-line code walkthroughs, forcing reviewers to reverse-engineer the high-level purpose of the change from low-level implementation details.
 
-**對照**：PR 標題寫成「修正 OrderService 於 batch flush 時因 cursor 未 rewind 導致的重複扣款」是命中。寫成「修正批次結帳的重複扣款」不是命中，細節留在內文。
+**Contrast**: Titling a PR `"Fix duplicate charge in OrderService during batch flush caused by unrewound cursor"` is a hit. Titling it `"Fix duplicate charge during batch checkout"` and keeping cursor details in the body is not a hit.
 
-**偵測**：判讀。
+**Detection**: Semantic judgement.
 
 ---
 
-## 何時該整份重寫而不是逐條修
+## When to Rewrite the Entire Document Instead of Patching
 
-同時滿足下列三項時，逐條修不會讓文件變好——結構本身就是草稿：
+When a document simultaneously meets all three conditions below, line-by-line patching will not salvage it because the document's skeleton itself is a draft:
 
-1. 命中五處以上 Tier 1
-2. 觸發三個以上不同徵狀分類
-3. 能力／限制的描述沒有一處是結構化的
+1. Five or more Tier 1 hits across the file.
+2. Hits spanning three or more distinct symptom groups (`A`–`D`).
+3. Zero structured tables or lists across its capability and limitation descriptions.
 
-此時建議整份重寫：先用一句話寫出這份文件的目的，再依目的重建章節。並在回報中明說你建議重寫而不是修補。
+When all three hold, recommend a full rewrite: state the document's single-sentence purpose first, rebuild the section headings around that purpose, and explicitly tell the user in your report why you recommend a full rewrite over incremental patching.
 
-## 自我引用豁免
+## Self-Reference Exemption
 
-本目錄與 `SKILL.md` 在說明徵狀時必須引用壞例子。引號內的示例與程式碼區塊一律豁免，不得被自己的稽核標記。只稽核本 Skill 自己的規範文字。
+This catalog and `SKILL.md` must quote defective examples when defining symptoms. Examples enclosed in quotation marks (`"..."`, `“...”`, `「...」`, `『...』`) and fenced/inline code spans are exempt from self-audit flags; audit only the normative prose of this Skill itself.

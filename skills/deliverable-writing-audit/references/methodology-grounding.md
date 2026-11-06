@@ -1,139 +1,139 @@
-# 交付文件稽核的理論基礎 (Methodology Grounding)
+# Methodology Grounding for Deliverable Writing Audit
 
-徵狀目錄的每一條都來自實際開發對話中反覆發生的糾正，不是從理論推導出來的。**本文件是事後對照**：把既有的徵狀逐條映射到已發表的理論框架上，看它們各自對應到哪一種既知的失效機制。
+Every symptom in the catalog originated from recurring corrections in real development sessions, not from top-down theoretical deduction. **This document is a post-hoc mapping**: it aligns each empirically discovered symptom with established theoretical frameworks to identify which known failure mechanism it instantiates.
 
-映射的用途有二：判讀邊界案例時多一個參照，以及新增徵狀時檢查它是不是某條既有徵狀的變形。**映射不提高任何徵狀的證據強度**——分層依據仍是糾正的頻率與語氣強度，見 [SKILL.md](../SKILL.md) 的證據強度聲明。
+This mapping serves two purposes: providing an analytical reference when adjudicating boundary cases, and checking whether a proposed new symptom is merely a surface variant of an existing one. **Theoretical mapping does not inflate the evidence strength of any symptom**—tier assignments remain governed by correction frequency and severity, as stated in the evidence disclosure note in [SKILL.md](../SKILL.md).
 
-五大理論支柱與逐條對應如下。
+The five theoretical pillars and their per-symptom mappings follow.
 
 ---
 
-## 五大理論支柱
+## Five Theoretical Pillars
 
 ```mermaid
 graph TD
-    A[交付文件稽核理論體系] --> B[1. 語言哲學與語用學<br>Pragmatics & Language Philosophy]
-    A --> C[2. 概念分析與認識論<br>Conceptual Analysis & Epistemology]
-    A --> D[3. 規範起草與道義邏輯<br>Normative Drafting & Deontic Logic]
-    A --> E[4. 技術傳播與資訊架構<br>Technical Communication & Info Mapping]
-    A --> F[5. 契約式設計與規格工程<br>Design by Contract & Formal Spec]
+    A["Deliverable Writing Audit Theoretical Framework"] --> B["1. Pragmatics & Philosophy of Language"]
+    A --> C["2. Conceptual Analysis & Epistemology"]
+    A --> D["3. Normative Drafting & Deontic Logic"]
+    A --> E["4. Technical Communication & Information Mapping"]
+    A --> F["5. Design by Contract & Formal Specification"]
     
-    B --> B1[Grice 合作原則 / Speech Act 言語行為 / 受控語言 CNL]
-    C --> C1[種加屬差定義法 / 操作型定義 / 認識論階層]
-    D --> D1[RFC 2119 道義模態 / 條件句消除歧義]
-    E --> E1[Robert Horn 資訊映射 / 認知負荷管理]
-    F --> F1[Pre/Post/Invariant 狀態機閉環]
+    B --> B1["Gricean Maxims / Speech Acts / Controlled Natural Language (CNL)"]
+    C --> C1["Genus-Differentia Definition / Operational Definition / Epistemic Hierarchy"]
+    D --> D1["RFC 2119 Deontic Modality / Unambiguous Conditionals"]
+    E --> E1["Robert Horn Information Mapping / Cognitive Load Management"]
+    F --> F1["Pre/Postconditions & Invariant State Machines"]
 ```
 
 ---
 
-### 一、語言哲學與語用學 (Linguistics & Pragmatics)
+### 1. Philosophy of Language and Pragmatics
 
-語用學研究語言在特定脈絡下的真實意義傳遞。本套件借鑒三個核心概念：
+Pragmatics studies how meaning is transmitted in context. This suite draws on three core frameworks:
 
-1. **格萊斯合作原則 (Grice's Cooperative Principle & Maxims)**：
-   - **質的準則 (Quality)**：**誠實與證據**。只陳述有充分證據支持的結論，不說自知為虛假或未經查證的話。對應徵狀：`A3 假成功宣稱`、`A4「未實測」殘留`、`C6 臆測填空`。
-   - **量的準則 (Quantity)**：**適量與精準**。提供的資訊量恰如所需，不塞入多餘雜訊，亦不遺漏關鍵邊界。對應徵狀：`B1 流水帳`、`B2 括號補述`、`C9 導覽夾帶內容`。
-   - **關聯準則 (Relevance)**：**脈絡聚焦**。每一句話必須服務當前主題與任務邊界。對應徵狀：`B6 標題與內容不相稱`、`D4 domain 細節過深`。
-   - **方式準則 (Manner)**：**簡潔有序，消滅歧義**。避免晦澀表達與換句話說的重複。對應徵狀：`B4 標題回音`、`D1 模糊量詞與填充詞`。
+1. **Grice's Cooperative Principle and Maxims**:
+   - **Maxim of Quality** (**Truthfulness and Evidence**): Assert only propositions supported by adequate evidence; never state what you know to be false or lack evidence for. Maps to: `A3 Unverified Success Claim`, `A4 Residual Unverified Status`, `C6 Speculative Filling`.
+   - **Maxim of Quantity** (**Precision of Information Volume**): Make your contribution as informative as required for the current purpose, neither injecting historical noise nor omitting critical boundaries. Maps to: `B1 Change Narration and Before/After Comparison`, `B2 Parenthetical Gloss`, `C9 Navigation Carrying Target Content`.
+   - **Maxim of Relation (Relevance)** (**Contextual Focus**): Every sentence must serve the current section's topic and task boundary. Maps to: `B6 Heading-Scope Mismatch`, `D4 Excessive Domain Implementation Detail`.
+   - **Maxim of Manner** (**Clarity, Brevity, and Order**): Avoid obscurity, ambiguity, and redundant restatement. Maps to: `B4 Heading Echo`, `D1 Vague Quantifiers and Filler Words`.
 
-2. **言語行為理論 (Speech Act Theory - Austin & Searle)**：
-   - 語言不只是「描述事實」（Constatives），亦用於「規範與約束行為」（Performatives / Directives）。
-   - **規範語意分離**：文件必須清晰區分「客觀狀態事實」、「指令約束」與「情境判準」，不可將裁量權模糊化。
+2. **Speech Act Theory (Austin & Searle)**:
+   - Language does not merely describe states of affairs (**Constatives**); it also enacts obligations and constrains behavior (**Performatives / Directives**).
+   - **Separation of Normative Force**: A specification must cleanly separate objective factual descriptions, zero-discretion directives, and context-dependent criteria without blurring the boundary of agent discretion.
 
-3. **受控自然語言 (Controlled Natural Language, CNL)**：
-   - 源於高風險工程（如 ASD-STE100），透過受限詞彙與明確語法消除自然語言的多義性。
-   - **單一概念單一名詞 (One Concept, One Term)**：同一實體在全系統內維持唯一指稱。對應徵狀：`C3 已退役術語復活`、`C11 同一概念多個名字`。
-
----
-
-### 二、概念分析與認識論 (Conceptual Analysis & Epistemology)
-
-認識論與概念分析解決「如何精確定義事物」與「如何劃定知識邊界」：
-
-1. **種加屬差定義法 (Definition by Genus and Differentia)**：
-   - 公式：$\text{定義} = \text{鄰近的屬 (Genus)} + \text{種差 (Differentia)}$。
-   - 嚴格防範**同義反覆 (Circular Definition)** 與定義過寬/過窄。概念必須明確指出上位類別與使它區別於同類的核心特徵。
-
-2. **操作型定義 (Operational Definition - Bridgman)**：
-   - 一個概念或要求若無法給出「可觀察、可測量、可重複檢驗的操作步驟」，它就無法被客觀驗收。
-   - 對應徵狀：`C1 無證據的能力限制宣稱`、`C2 該結構化卻寫成流水句`。
-
-3. **認識論狀態階層 (Epistemic Status)**：
-   - 嚴格區分：**已驗證事實 (Verified Fact) > 待查驗假說 (Hypothesis) > 無依據臆測 (Speculation)**。
-   - 規範文件中禁止「應該可以」、「推測可行」等未驗證狀態殘留。
+3. **Controlled Natural Language (CNL)**:
+   - Originating in high-reliability engineering specifications such as ASD-STE100 (Simplified Technical English), CNL eliminates polysemy through restricted vocabulary and deterministic syntax.
+   - **One Concept, One Term**: Every domain entity maintains a single canonical designation across the entire repository. Maps to: `C3 Revived Retired Terminology`, `C11 Multiple Terms for One Concept`.
 
 ---
 
-### 三、規範起草學與道義邏輯 (Normative Drafting & Deontic Logic)
+### 2. Conceptual Analysis and Epistemology
 
-法律起草與規格標準化（IETF RFC 2119 / RFC 8174）要求規則文字具備確定性：
+Epistemology and conceptual analysis govern how concepts are defined and how knowledge boundaries are drawn:
 
-1. **道義邏輯模態 (Deontic Modality)**：
-   - **義務 (MUST / 必須)**：無例外強制執行。
-   - **禁止 (MUST NOT / 不得)**：絕對禁止行為。
-   - **判準 (SHOULD / 依情境判斷)**：依明確判定條件執行，有例外需記錄理由。
-   - **允許 (MAY / 可)**：完全自由裁量。
-   - 在 Skill 規範中，對應【硬約束】與【判準】的嚴格二元分級。
+1. **Definition by Genus and Differentia**:
+   - Formula: $\text{Definition} = \text{Proximate Genus (Parent Category)} + \text{Specific Differentia (Distinguishing Invariant)}$.
+   - Strictly prevents **Circular Definitions (Tautologies)** and definitions that are too broad or too narrow. Every domain concept must identify its parent class and the specific invariant that separates it from sibling concepts.
 
-2. **句法無歧義原則**：
-   - 條件子句（IF / WHEN）必須與主句約束直接相連，不可存在懸空修飾語 (Dangling Modifiers)。
+2. **Operational Definition (P. W. Bridgman)**:
+   - If a concept or requirement cannot be stated in terms of **observable, repeatable verification steps and expected outputs**, it cannot be objectively audited or accepted.
+   - Maps to: `C1 Unevidenced Capability Limitation Claim`, `C2 Unstructured Prose for Enumerable Facts`, `C12 Tautological and Non-Operational Definitions`.
 
----
-
-### 四、技術傳播與資訊架構 (Technical Communication & Info Mapping)
-
-管理讀者（人或 Agent 模型）的認知負荷：
-
-1. **資訊映射理論 (Information Mapping - Robert E. Horn)**：
-   - **區塊化 (Chunking)**：將資訊切分為高內聚的獨立單元。
-   - **標籤自明性 (Labeling)**：以具備語意的標題引導，去除無實質意義的填充過渡。
-   - **資訊分型**：嚴格分離原理、流程、事實、概念與案例。
-
-2. **認知負荷與漸進揭露 (Progressive Disclosure)**：
-   - 頂層入口（`SKILL.md`）僅提供路由與核心約束摘要；深層細節（`references/`）按需載入，避免塞爆 Context Window。對應徵狀：`C9 導覽夾帶內容`、`C4 規則重複散落`。
+3. **Epistemic Status Hierarchy**:
+   - Enforces a strict hierarchy: **Verified Fact > Testable Hypothesis > Ungrounded Speculation**.
+   - Specifications must never leave unverified epistemic states (`"should work"`, `"presumably supported"`, `"TBD"`) standing as normative claims.
 
 ---
 
-### 五、契約式設計與規格工程 (Design by Contract - Bertrand Meyer)
+### 3. Normative Drafting and Deontic Logic
 
-將工程行為與規範約束定義為嚴謹的狀態轉換契約：
+Legal drafting and protocol standardization (IETF RFC 2119 / RFC 8174) require deterministic rule phrasing:
 
-1. **前置條件 (Preconditions)**：動作執行前必須滿足的狀態（如：授權動詞、工項已建立、Schema 已取得）。
-2. **後置條件 (Postconditions)**：動作執行後必定成立且可驗證的狀態（如：證據已留存、回報已閉環）。
-3. **不變量 (Invariants)**：跨越所有動作與流程永遠不得破壞的硬約束（如：不可復原刪除禁令、機敏不外洩、零臆測）。
+1. **Deontic Modality**:
+   - **Obligation (`MUST`)**: Unconditional requirement with zero exceptions.
+   - **Prohibition (`MUST NOT`)**: Absolute prohibition.
+   - **Criterion (`SHOULD` / Context-Dependent Judgement)**: Governed by an explicit decision criterion (`The criterion is "..."`), requiring documented rationale when an exception applies.
+   - **Permission (`MAY`)**: Full discretionary freedom.
+   - Within this Skill suite, these map to the strict binary separation between `[Hard Constraint]` and `Criterion`.
+
+2. **Syntactic Unambiguity Principle**:
+   - Conditional clauses (`IF` / `WHEN`) must bind directly to the main imperative clause without dangling modifiers or hedged qualifiers.
 
 ---
 
-## 理論支柱與 28 條徵狀映射矩陣
+### 4. Technical Communication and Information Architecture
 
-| 徵狀組別 | 徵狀代號與名稱 | 核心理論支柱 | 違反之學術/工程原則 |
+Manages cognitive load for both human readers and LLM agents:
+
+1. **Information Mapping (Robert E. Horn)**:
+   - **Chunking**: Partition information into high-cohesion, self-contained functional units.
+   - **Self-Evident Labeling**: Guide attention with semantic headings that match the exact scope of their body text, eliminating empty transitional filler.
+   - **Information Typing**: Strictly separate principles, procedures, facts, concepts, and examples rather than mixing historical narrative into normative rules.
+
+2. **Cognitive Load and Progressive Disclosure**:
+   - Top-level entrypoints (`SKILL.md`) carry only routing logic and core invariants; deep rules (`references/`) load on demand so the Context Window is not flooded. Maps to: `C9 Navigation Carrying Target Content`, `C4 Scattered Duplicate Rules`.
+
+---
+
+### 5. Design by Contract and Formal Specification (Bertrand Meyer)
+
+Models engineering discipline and specification governance as rigorous state-transition contracts:
+
+1. **Preconditions**: States that must hold before an action executes (e.g., an authorizing user verb, an active work item, a verified upstream schema).
+2. **Postconditions**: Verifiable states guaranteed to hold after an action completes (e.g., preserved verbatim evidence, closed-loop reporting).
+3. **Invariants**: Hard constraints that must never be violated across any state transition (e.g., no irreversible deletion, zero secret leakage, zero speculation).
+
+---
+
+## Theoretical Pillars to 28-Symptom Mapping Matrix
+
+| Symptom Group | ID and Canonical Symptom Name | Primary Theoretical Pillar | Violated Academic / Engineering Principle |
 | :--- | :--- | :--- | :--- |
-| **A. 資安與可信度** | A1 機敏值外洩 | 契約式設計 (Invariants) | 破壞系統安全不變量 |
-| | A2 AI 署名 | 受控語言 / 資訊純度 | 引入與產出無關之元資訊 (Metadata Noise) |
-| | A3 假成功宣稱 | Grice 質的準則 / 操作型定義 | 陳述缺乏操作型證據之虛假命題 |
-| | A4「未實測」殘留 | 認識論階層 (Epistemic Status) | 懸空狀態未收斂至確定態 |
-| | A5 本機絕對路徑 | 契約式設計 (Invariants) | 破壞環境無關性與可移植性 |
-| **B. 形式雜訊** | B1 流水帳與比較新舊 | Grice 量的準則 / 資訊映射 | 混淆歷史歷程與當前規範之資訊分型 |
-| | B2 括號補述 | 受控自然語言 (CNL) | 句法結構碎裂，破壞主幹閱讀流 |
-| | B3 個人註記殘留 | 資訊映射 (Chunking) | 草稿未收斂狀態外洩 |
-| | B4 標題回音 | Grice 方式準則 / 量的準則 | 同義反覆，增加無效認知負荷 |
-| | B5 文件描述自己 | 漸進揭露 (Progressive Disclosure) | 元敘述缺乏操作意義 |
-| | B6 標題與內容不相稱 | 資訊映射 (Labeling) | 語意標籤與內容外延不一致 |
-| **C. 語意理解** | C1 無證據的能力限制宣稱 | 操作型定義 / Grice 質的準則 | 未經窮舉檢驗即斷言否定性命題 |
-| | C2 該結構化卻寫成流水句 | 資訊映射 (Chunking) | 列表資訊未結構化 |
-| | C3 已退役術語復活 | 受控自然語言 (CNL) | 破壞單一概念單一名詞原則 |
-| | C4 規則重複散落 | 單一事實來源 (SSOT) / 漸進揭露 | 多頭維護導致認知不一致 |
-| | C5 摘要掉錯誤原文 | 操作型定義 / 證據閉環 | 丟失除錯所需的完整觀察數據 |
-| | C6 臆測填空 | 認識論階層 / Grice 質的準則 | 以主觀猜測頂替客觀事實 |
-| | C7 開發者術語滲入交付物 | 語用學脈絡 (Context Matching) | 交付對象語境錯位 |
-| | C8 專案特定事實滲入通用規範 | 概念分析 (Genus vs Instance) | 將專案實例誤當通用類別 |
-| | C9 導覽夾帶內容 | 漸進揭露 (Progressive Disclosure) | 入口層與細節層職責混淆 |
-| | C10 跨檔不一致 | 道義邏輯 (Consistency) | 系統內存在互斥之規則主張 |
-| | C11 同一概念多個名字 | 受控自然語言 (CNL) | 同義詞過度擴散破壞檢索性 |
-| | C12 同義反覆與非操作型定義 | 種加屬差定義法 / 操作型定義 | 循環反覆缺乏可判定之操作檢驗步驟 |
-| | C13 道義模態混淆 | 道義邏輯 (RFC 2119) | 硬約束與情境判準之約束強度錯配 |
-| **D. 密度與版式** | D1 模糊量詞與填充詞 | 受控自然語言 / 操作型定義 | 缺乏可量測之判定標準 |
-| | D2 emoji 密度 | 資訊映射純度 | 視覺雜訊干擾結構化讀取 |
-| | D3 條列標籤用句號 | 排版語意學 (Typography) | 標籤與內容斷句邏輯錯位 |
-| | D4 domain 細節過深 | 語用學關聯準則 (Relevance) | 超出目標讀者認知邊界 |
+| **A. Security & Credibility** | A1 Secret and Credential Leakage | Design by Contract (Invariants) | Violates system security invariant |
+| | A2 AI Attribution Signature | Controlled Natural Language / Information Purity | Injects non-functional metadata noise into deliverables |
+| | A3 Unverified Success Claim | Gricean Maxim of Quality / Operational Definition | Asserts a proposition lacking operational verification evidence |
+| | A4 Residual Unverified Status | Epistemic Status Hierarchy | Leaves an unresolved epistemic state in a normative table |
+| | A5 Local Absolute Path | Design by Contract (Invariants) | Breaks environment independence and portability |
+| **B. Formal Noise** | B1 Change Narration and Before/After Comparison | Gricean Maxim of Quantity / Information Mapping | Conflates historical change log with current specification state |
+| | B2 Parenthetical Gloss | Controlled Natural Language (CNL) | Fragments syntactic structure and interrupts primary reading flow |
+| | B3 Residual Note-to-Self | Information Mapping (Chunking) | Leaks unclosed working-draft state into deliverables |
+| | B4 Heading Echo | Gricean Maxim of Manner / Quantity | Redundant paraphrase adding zero-information cognitive load |
+| | B5 Self-Describing Metadiscourse | Progressive Disclosure | Meta-commentary lacking operational value |
+| | B6 Heading-Scope Mismatch | Information Mapping (Labeling) | Semantic label extension mismatches body content |
+| **C. Semantic Comprehension** | C1 Unevidenced Capability Limitation Claim | Operational Definition / Gricean Quality | Asserts a negative capability proposition without exhaustive testing |
+| | C2 Unstructured Prose for Enumerable Facts | Information Mapping (Chunking) | Compresses enumerable state matrix into unparsed prose |
+| | C3 Revived Retired Terminology | Controlled Natural Language (CNL) | Violates One Concept, One Term principle |
+| | C4 Scattered Duplicate Rules | Single Source of Truth (SSOT) / Progressive Disclosure | Multi-location maintenance causing rule drift |
+| | C5 Summarized Away Verbatim Error | Operational Definition / Evidence Closure | Destroys primary observational data required for debugging |
+| | C6 Speculative Filling | Epistemic Status Hierarchy / Gricean Quality | Substitutes subjective guessing for verified source schema |
+| | C7 Developer Jargon Leaked into Deliverables | Pragmatic Context Matching | Mismatches terminology register to target audience |
+| | C8 Project-Specific Facts Leaked into Shared Rules | Conceptual Analysis (Genus vs. Instance) | Mistakes a project-local instance for a universal category |
+| | C9 Navigation Carrying Target Content | Progressive Disclosure | Conflates routing table responsibility with canonical content |
+| | C10 Cross-File Inconsistency | Deontic Logic (Consistency) | Holds mutually contradictory normative claims across files |
+| | C11 Multiple Terms for One Concept | Controlled Natural Language (CNL) | Uncontrolled synonym drift breaking cross-reference |
+| | C12 Tautological and Non-Operational Definitions | Genus-Differentia / Operational Definition | Circular restatement lacking repeatable verification steps |
+| | C13 Deontic Modality Confusion | Deontic Logic (RFC 2119) | Mismatches modal obligation strength to risk reversibility |
+| **D. Density & Formatting** | D1 Vague Quantifiers and Filler Words | Controlled Natural Language / Operational Definition | Replaces measurable criteria with unexecutable hedges |
+| | D2 Emoji Density | Information Mapping Purity | Visual noise competing with structural hierarchy |
+| | D3 Period Inside Bold List Label | Typographic Semantics | Premature terminal punctuation breaking label-to-clause binding |
+| | D4 Excessive Domain Implementation Detail | Gricean Maxim of Relation (Relevance) | Exceeds cognitive scope of the target review audience |

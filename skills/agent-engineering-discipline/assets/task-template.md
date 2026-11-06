@@ -1,64 +1,64 @@
-# [狀態] TASK-YYYYMMDD-HHMMSS-<rr>-<slug>: 任務簡短標題
+# [Status] TASK-YYYYMMDD-HHMMSS-<rr>-<slug>: Concise Work Item Title
 
-- **建立日期**：YYYY-MM-DD
-- **當前狀態**：`[待處理]` / `[進行中]` / `[已完成]` / `[已取消]`
-- **關聯工項**：`無`（或 `阻擋於 TASK-...` / `取代 TASK-...` / `參照 TASK-...`）
+- **Created Date**: YYYY-MM-DD
+- **Current Status**: `[Pending]` / `[In Progress]` / `[Completed]` / `[Cancelled]`
+- **Related Work Items**: `None` (or `Blocked by TASK-...` / `Supersedes TASK-...` / `References TASK-...`)
 
 ---
 
-## 任務描述
-> 【必填】說明任務背景、痛點、具體問題意識與預期目標。
+## Description
+> [REQUIRED] State background, problem, and goal.
 
-簡述要解決的問題與預期目標。
+Summarize the problem to solve and the expected outcome.
 
-## 輸入
-> 【必填】列出前置工項編號、來源檔案路徑、規格或已知事實。
+## Inputs
+> [REQUIRED] List source paths, specs, and known facts.
 
-動手前已知的事實與依據：來源檔案、參數、前置狀態。要交給其他 Agent 執行時，這裡要寫到它不必回頭問也能動手。
+Facts and preconditions known before acting: source files, parameters, and prior state. When delegating to another agent, specify enough detail that the executor can start without asking follow-up questions.
 
-- 來源檔案：`path/to/...`
-- 前置狀態：
+- Source files: `path/to/...`
+- Prior state:
 
-## 執行方法
-> 【條件填】依任務性質填寫方法名；純文件或設定修正填「不適用」或整節刪除。
+## Execution Method
+> [CONDITIONAL] Name method, or write Not applicable.
 
-- **方法**：測試先行 / 兩階段規劃 / 研究 / 其他（寫明依據） / 不適用
-- **驗收據此**：該方法決定驗收條件寫成什麼形式。測試先行以測試由紅轉綠為準；研究以該有的結構在不在、來源齊不齊為準；不適用時以規格靜態查核為準。
+- **Method**: Test-First / Brainstorm and Plan / Research / Other (state basis) / Not applicable
+- **Acceptance basis**: The chosen method determines how acceptance criteria are verified. Test-First requires tests transitioning from red to green; Research requires structural completeness and verified primary sources; Not applicable relies on static specification checks.
 
-## 變更範圍
-> 【必填】以清單或 checkbox 列出預計動到的檔案路徑清單。
+## Scope of Changes
+> [REQUIRED] List every file path to be touched.
 
-- [ ] 程式碼：`src/...`
-- [ ] Skills / 設定檔
+- [ ] Code: `src/...`
+- [ ] Skills / Configuration:
 
-## 限制條件
-> 【必填】明確定義作業邊界與防護底線，未寫視同留白。
+## Constraints
+> [REQUIRED] Define file boundaries and red lines.
 
-- **檔案邊界**：可動哪些、不准動哪些。
-- **不得做什麼**：本次不處理的相鄰問題，發現了另行建立工項，不順手改掉。
-- **卡住時的行為**：停下回報卡在哪、缺什麼條件，不硬幹。
+- **File boundary**: Exact paths permitted to change and paths off-limits.
+- **Prohibited actions**: Adjacent issues excluded from this pass; log a new work item if discovered rather than fixing in passing.
+- **Behavior when blocked**: Stop and report where blocked and what prerequisite is missing; do not improvise workarounds.
 
-## 驗收條件
-> 【必填】列出驗收者不重做一遍即可判定完成的項目，一條一行。
+## Acceptance Criteria
+> [REQUIRED] List decidable completion checks.
 
-動手前寫定，什麼成立才算完成。一條一行，寫成不必判讀就能核對的形式。事後不得因結果調整，真的要改就寫明改了什麼與為什麼。
+Written before acting, one criterion per line, phrased so an evaluator can verify completion without redoing the work. Never weaken criteria after the fact to fit partial results; if a criterion must change, record what changed and why.
 
-- [ ] 驗收項目一
-- [ ] 驗收項目二
+- [ ] Criterion 1
+- [ ] Criterion 2
 
-## 驗證與測試
-> 【必填】寫出驗證本次改動的具體可執行指令或形式查核步驟。
+## Verification and Testing
+> [REQUIRED] Provide executable verification steps.
 
-取得上一節所需證據的步驟，寫成驗收者不必重做一遍就能判定的形式。程式類給可執行的指令，研究類給該有的結構與證據。
+Exact commands or structural checks used to gather the proof required by the acceptance criteria above.
 
 ```bash
 python3 -m pytest tests/ -q
 ```
 
-## 驗證結果
-> 【必填】動手完成後填寫。填入測試輸出的關鍵結果摘要或結束碼。
+## Verification Results
+> [REQUIRED] Record outputs and exit codes after work.
 
-證據是文字本身時，指向它在正本的位置，不複製全文。工項不被載入，副本在正本缺席時同樣缺席，提供不了保護，卻讓正本多出一份跨檔重複。
+When the deliverable is prose, record a pointer to the canonical file path and section rather than copying the prose body into the work item—copying prose into a work item creates cross-file duplication without adding runtime protection.
 
-- **測試結果**：`[通過 / 失敗]`
-- **驗證截圖**：`docs/tasks/screenshots/TASK-YYYYMMDD-HHMMSS-<rr>-<slug>__01.png`（涉及 UI 或外部可觀察畫面狀態時附上；純程式或純文件任務填「不適用」）
+- **Test Result**: `[Passed / Failed]`
+- **Verification Screenshot**: `docs/tasks/screenshots/TASK-YYYYMMDD-HHMMSS-<rr>-<slug>__01.png` (attach when UI or visible external state is involved; write `Not applicable` for pure code or documentation tasks)

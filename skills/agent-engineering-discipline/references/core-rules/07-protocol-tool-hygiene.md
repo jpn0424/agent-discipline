@@ -1,27 +1,28 @@
-# Core Rule 07: Protocol & Tool Hygiene (Stdio 隔離與零臆測 Schema)
+# Core Rule 07: Protocol & Tool Hygiene
 
-## 為什麼要制定此規則？ (Why)
-在 Stdio MCP 模式下，`stdout` 被 JSON-RPC 協定專用。若程式碼寫入裸 `print()`，診斷訊息會直接混入 JSON 串流，導致 MCP Client 報 JSON Parse Error 而崩潰。
-同時，憑空臆測 API 欄位 Key 名，例如把 `memo` 或 `details` 當成真實欄位填入，會引發傳入非預期 Payload 的 Runtime 錯誤。
+## Why This Rule Exists (Why)
+In Stdio MCP mode, `stdout` is reserved exclusively for the JSON-RPC transport stream. If server code calls a bare `print()`, diagnostic text is injected directly into the JSON stream, causing the MCP client to crash with a JSON parse error.
+Meanwhile, guessing API field names from memory—such as passing `memo` or `details` without checking the schema—triggers runtime payload validation errors or silent data loss.
 
 ---
 
-## 具體執行方式 (How)
+## How to Execute (How)
 
-### 1. Stdio / Stderr 通訊隔離 (Stdout Protection)
+### 1. Stdout Protection (Stdio / Stderr Isolation)
 > [!IMPORTANT]
-> **硬約束。** 照字面執行，沒有判斷空間——違反後不可復原或影響第三方。
-- **Stdout 專供 JSON-RPC**：伺服器端程式碼**不得使用裸 `print(...)`**。
-- **診斷 Log 走 Stderr**：所有除錯、診斷訊息必須寫入 `sys.stderr`：
+> **Hard constraint:** Zero discretion.
+
+- **`stdout` Reserved for JSON-RPC**: Server-side code **must never call bare `print(...)`** to standard output.
+- **Route Diagnostics to `stderr`**: Write all debug logs and diagnostic messages explicitly to `sys.stderr`:
   ```python
   import sys
   print("[DEBUG] Processing payload...", file=sys.stderr)
   ```
 
-### 2. 零臆測 Schema (No Schema Guessing)
-判準是「這個 Key 名，你指得出它從哪裡來嗎」。指不出來就還不能填。
+### 2. Zero-Speculation Schema Lookup (No Schema Guessing)
+The criterion is **"for every key name you write, can you point to the authoritative source where you verified it?"** If not, do not write the key yet.
 
-- **寫入前先查**：組裝 API Payload 前向源頭取得結構，確認 Key 名、型態與必填性後再填入。憑印象推論出來的欄位名與真實欄位名在字面上沒有差別，差別只在有沒有查證過。
-- **什麼算源頭**：由目標系統本身即時回傳或發布的結構定義——結構查詢端點、OpenAPI／JSON Schema、工具自身的 schema 宣告、該系統的官方欄位契約文件。
-- **什麼不算源頭**：記憶中的欄位名、其他專案的類似 API、範例程式碼、以及上一個工作階段取得但本次未重新確認的結構。
-- **查不到就停下**：源頭查不到該欄位，回報查不到，不得改用看起來合理的鍵名頂替。
+- **Query Before Constructing**: Before assembling any API or tool payload, query the **authoritative source** to confirm exact key names, types, and required constraints. A guessed field name and a real field name look identical in code; the only difference is whether you verified it.
+- **What Qualifies as an Authoritative Source**: Live schema definitions returned or published by the target system itself—schema introspection endpoints, OpenAPI / JSON Schema specs, the tool's own registered schema declaration, or the system's canonical field contract documentation.
+- **What Does Not Qualify**: Field names recalled from memory, similar APIs from other projects, illustrative snippet examples, or schemas inspected in a previous session but not re-verified against the current version.
+- **Stop When Unreachable**: If the authoritative source cannot be reached or does not expose the field, stop and report that the schema could not be verified—never substitute a plausible-looking key name.

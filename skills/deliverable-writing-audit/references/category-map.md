@@ -1,65 +1,65 @@
-# 徵狀 ↔ 偵測腳本對照表
+# Symptom ↔ Detection Script Mapping
 
-本表是 [pattern-catalog.md](pattern-catalog.md) 與 `../scripts/detect.py` 之間的防漂移契約。新增徵狀時，必須在此表決定它屬於哪一組；新增腳本 `type` 時，必須在此指回它對應的徵狀編號。
+This table is the drift-prevention contract between [pattern-catalog.md](pattern-catalog.md) and `../scripts/detect.py`. When adding a symptom to the catalog, assign it to one of the sections below; when adding a script `type`, map it back to its catalog ID here.
 
-目錄共 28 條徵狀，腳本有 14 個 `type`。差距**不是覆蓋缺口**，是那些徵狀需要讀懂語意才能判斷。
+The catalog contains 28 symptoms; the script defines 14 `type` values. The difference **is not a coverage gap**—those remaining symptoms require semantic comprehension to evaluate.
 
-## A. 直接對應（徵狀 → 腳本 `type`）
+## A. Direct Mapping (Symptom → Script `type`)
 
-| 腳本 `type` | 目錄編號 | 徵狀 | 偵測方式 |
+| Script `type` | Catalog ID | Symptom | Detection Mechanism |
 | --- | --- | --- | --- |
-| `secret-leak` | A1 | 機敏值外洩 | 憑證賦值形狀、`.env` 導出指令、非白名單外部主機名 |
-| `ai-signature` | A2 | AI 署名 | 固定字串比對 |
-| `unverified-status` | A4 | 「未實測」殘留 | 狀態詞比對 |
-| `abs-path` | A5 | 本機絕對路徑 | 路徑前綴比對，涵蓋 code span 內；佔位符化的形態不符字元集，天然豁免 |
-| `change-narration` | B1 | 流水帳與比較新舊 | 句型比對 |
-| `paren-gloss` | B2 | 括號補述 | 括號內含中英文解釋詞或因果補述標記 |
-| `note-to-self` | B3 | 個人註記殘留 | 標記詞比對 |
-| `retired-term` | C3 | 已退役術語復活 | `--terms` 提供的清單比對 |
-| `duplicated-rule` | C4 | 規則重複散落 | 跨檔完全重複的實質內容行 |
-| `dev-jargon-leak` | C7 | 開發者術語滲入交付物 | 術語與編號形狀比對 |
-| `vague-filler` | D1 | 模糊量詞與填充詞 | 每千字密度，門檻 4.0 |
-| `emoji-density` | D2 | emoji 密度 | 每千字密度，門檻 1.0，扣除表格狀態標記 |
-| `label-period` | D3 | 條列標籤用句號 | 行首條列 + **粗體**短標籤 + 句號。未加粗形式歸判讀，見下方 D 組 |
+| `secret-leak` | A1 | Secret and credential leakage | Credential assignment patterns, `.env` dump commands, non-allowlisted external hostnames |
+| `ai-signature` | A2 | AI attribution signature | Fixed string and phrase matching |
+| `unverified-status` | A4 | Residual unverified status | Status token matching |
+| `abs-path` | A5 | Local absolute path | Path prefix matching including inside code spans; angle-bracket placeholders do not match the character class and are naturally exempt |
+| `change-narration` | B1 | Change narration and before/after comparison | Chronological and before/after phrase matching |
+| `paren-gloss` | B2 | Parenthetical gloss | Parentheses containing explanatory or causal gloss markers |
+| `note-to-self` | B3 | Residual note-to-self | Draft marker matching |
+| `retired-term` | C3 | Revived retired terminology | Exact matching against `--terms` list |
+| `duplicated-rule` | C4 | Scattered duplicate rules | Exact duplicate substantive lines across files |
+| `dev-jargon-leak` | C7 | Developer jargon leaked into deliverables | Jargon token and internal ID pattern matching |
+| `vague-filler` | D1 | Vague quantifiers and filler words | Density per 1,000 characters, threshold `4.0` |
+| `emoji-density` | D2 | Emoji density | Density per 1,000 characters, threshold `1.0`, excluding table status glyphs |
+| `label-period` | D3 | Period inside bold list label | List bullet + **bold** short label + period. Unbolded forms belong to semantic judgement; see Group D below |
 
-## B. 部分對應（腳本只標位置，判讀仍歸 Agent）
+## B. Partial Mapping (Script Flags Location; Judgement Remains with Agent)
 
-| 腳本 `type` | 目錄編號 | 限制原因 |
+| Script `type` | Catalog ID | Reason for Limitation |
 | --- | --- | --- |
-| `unevidenced-limit` | C1 | 腳本能找出「做不到／只能／無法」的位置，並檢查同一行有沒有證據標記。但證據**充不充分**、有沒有試過所有相關操作、是不是把已成功的事寫成限制，都必須讀懂上下文。腳本輸出一律標為「需人工核對」。 |
+| `unevidenced-limit` | C1 | The script locates limitation phrases (`"cannot"`, `"unsupported"`, `"only via"`) and checks whether the same line contains an evidence marker. Whether the evidence is **sufficient**, whether all relevant operations were tested, and whether an already-succeeded operation was misdescribed as a limitation require reading the surrounding context. All script hits require human/agent verification. |
 
-## C. 僅判讀（無腳本 `type`）
+## C. Judgement Only (No Script `type`)
 
-這些徵狀需要讀懂語意，寫在目錄裡由 Agent 執行。列在此處是為了讓後續維護者不要把它們的缺席誤認成覆蓋缺口。
+These symptoms require semantic comprehension and are executed by the Agent against the catalog. They are listed here so future maintainers do not mistake their absence from `detect.py` for an implementation gap.
 
-| 目錄編號 | 徵狀 | 需語意判讀成因 |
+| Catalog ID | Symptom | Why Semantic Judgement Is Required |
 | --- | --- | --- |
-| A3 | 假成功宣稱 | 判斷「已修復」有沒有證據，需要在整份文件裡找對應的錯誤原文、回讀結果或截圖，而且證據可能在別的章節。 |
-| B4 | 標題回音 | 需要判斷下一行是否只是把標題換句話說。字面重疊率低但語意重複的情形抓不到，字面重疊高卻是正當摘要的情形又會誤判。 |
-| B5 | 文件描述自己 | 要分辨自述與邊界聲明，得判斷拿掉那句話之後讀者會不會誤判範圍。兩者的句型完全一樣，差別在它指不指得出別處的內容。 |
-| B6 | 標題與內容不相稱 | 要數出一節有幾個主題，而主題的邊界是語意問題。段數、長度、標題字面都判不出來。 |
-| C2 | 該結構化卻寫成流水句 | 需要判斷這段內容「是否在列舉」。長段落不等於該拆，說明理由的段落本來就是敘述。 |
-| C5 | 摘要掉錯誤原文 | 要判斷「這裡本來該有原文卻沒有」，等於要判斷該處是否在回報失敗，這是語意問題。 |
-| C6 | 臆測填空 | 一個看起來合理的欄位名與一個真實的欄位名在字面上沒有差別，差別在有沒有查證過。 |
-| C8 | 專案特定事實滲入通用規範 | 判斷一個名字是「公開標準」還是「某專案的內部命名」，需要知道那個名字在外部世界存不存在。字面上兩者沒有差別。 |
-| C9 | 導覽夾帶內容 | 要判斷一格文字是「範圍」還是「摘要」。兩者長度相近、句型相同，差別在它有沒有把目標的內容搬過來。 |
-| C10 | 跨檔不一致 | 腳本比對得出兩行相同，比對不出兩行互相矛盾。判斷矛盾要理解兩句各自主張什麼，以及它們能不能同時成立。 |
-| C11 | 同一概念多個名字 | 要先知道兩個詞指的是不是同一個東西。字面上它們是兩個無關的詞，判斷同義需要領域知識。 |
-| C12 | 同義反覆與非操作型定義 | 判斷一個定義是否為換句話說或缺乏可重複檢驗的操作步驟，需要理解語意與概念的種差架構。 |
-| C13 | 道義模態混淆 | 判斷一條規則是「不可逆硬約束」還是「情境判準」，需要對照系統風險等級與後果可逆性。 |
-| D4 | domain 細節過深 | 「過深」相對於讀者是誰。同一段文字在技術文件是剛好，在 PR 內容是過深。 |
+| A3 | Unverified success claim | Verifying whether `"Fixed"` or `"Completed"` has backing evidence requires locating the corresponding verbatim error, read-back result, or screenshot across the entire document, which may legitimately reside in another section. |
+| B4 | Heading echo | Requires judging whether the opening line merely paraphrases the heading. Surface word-overlap thresholds miss low-overlap paraphrases while falsely flagging legitimate high-overlap section summaries. |
+| B5 | Self-Describing metadiscourse | Distinguishing self-describing metadiscourse from a scope boundary declaration requires judging whether removing the sentence causes the reader to misjudge the document's scope. Both share identical syntax; the difference is whether the sentence points to content in another file. |
+| B6 | Heading-scope mismatch | Requires counting how many distinct topics a section contains, and topic boundaries are semantic rather than syntactic. Paragraph count, length, and heading wording cannot determine this. |
+| C2 | Unstructured prose for enumerable facts | Requires judging whether a passage is **enumerating items**. Long paragraphs are not inherently defective; paragraphs explaining rationale belong in prose. |
+| C5 | Summarized away verbatim error | Judging that verbatim error output is missing where it belongs requires recognizing that the passage is reporting a failure in the first place. |
+| C6 | Speculative filling | A fabricated field name that looks plausible is lexically indistinguishable from a verified field name; the difference lies in whether the schema was queried. |
+| C8 | Project-specific facts leaked into shared rules | Distinguishing a public standard from a project-internal identifier requires knowing whether that name exists in external specifications. Lexically they look identical. |
+| C9 | Navigation carrying target content | Requires judging whether a table cell states **routing scope** or **content summary**. Both have similar length and sentence structure; the difference is whether the cell duplicates the target file's substance. |
+| C10 | Cross-file inconsistency | A script can detect two identical lines, not two mutually contradictory claims. Detecting contradiction requires understanding what each sentence asserts and whether both can hold simultaneously. |
+| C11 | Multiple terms for one concept | Requires knowing that two lexically unrelated words refer to the same entity within the domain. |
+| C12 | Tautological and non-operational definitions | Judging whether a definition is circular or lacks repeatable verification steps requires analyzing its genus-differentia structure and operational testability. |
+| C13 | Deontic modality confusion | Judging whether a rule is an irreversible `[Hard Constraint]` or a context-dependent `Criterion` requires evaluating system risk and consequence reversibility. |
+| D4 | Excessive domain implementation detail | `"Excessive"` is relative to the target reader. The exact same technical passage is appropriate in an architecture spec and excessive in a PR description. |
 
-## D. 曾嘗試機械化後撤回
+## D. Attempted Mechanization Later Withdrawn
 
-記錄在此避免重複投入：
+Recorded here to prevent repeating rejected experiments:
 
-- **A3 假成功宣稱** 曾考慮以「已修復／已完成 且同段落無證據標記」實作。撤回原因是證據常常合法地放在另一個章節（工項的驗證結果欄、獨立的截圖節），凡是嚴到能抓到真陽性的規則都會把正常的分節書寫大量誤判。
-- **B4 標題回音** 曾考慮以標題與次行的字元重疊率實作。撤回原因是中文的換句話說重疊率可以很低，而正當的章節導言重疊率可以很高，兩個方向的誤判都無法用門檻分開。
-- **D3 條列標籤用句號的未加粗形式** 曾一併納入。撤回原因是未加粗的開頭片段常是完整句子（「重新執行測試。若…」），而分辨標籤與句子需要中文動詞偵測，正則「做不到」。目前只抓粗體形式，未加粗形式歸判讀。
+- **A3 Unverified success claim** was considered for regex detection via `"Fixed / Completed without an evidence marker in the same paragraph"`. Withdrawn because evidence legitimately resides in dedicated sections (`## Verification Results` in a work item, or a separate test output block); any rule strict enough to catch true positives produced mass false positives on normal multi-section documents.
+- **B4 Heading echo** was considered via character/token overlap between a heading and its first sentence. Withdrawn because paraphrases can have near-zero lexical overlap while legitimate topic introductions often repeat key nouns from the heading, making both false negatives and false positives inseparable by threshold.
+- **D3 Unbolded list-label periods** were initially included alongside bold labels. Withdrawn because unbolded opening spans in list items are frequently complete imperative sentences (`"- Run the test suite. If it fails..."`), and distinguishing a noun phrase label from an imperative clause in English or Chinese without a part-of-speech parser is unreliable in regex. The script therefore restricts detection to the high-precision **bold** form (`- **Label.**`), leaving unbolded forms to semantic judgement.
 
-## 兩個數字各自獨立
+## Two Counts Are Independent
 
-下列兩個計數刻意不強求相等，維護時不要試圖對齊：
+Do not attempt to force these two numbers to match during maintenance:
 
-- 目錄的 **28 條徵狀**：人讀與語意稽核的完整清單，含只判讀的項目。
-- 腳本的 **14 個 `type`**：可機械比對的子集。
+- **28 symptoms** in the catalog: the complete checklist for human and agent semantic auditing, including judgement-only items.
+- **14 `type` values** in the script: the mechanically detectable subset.

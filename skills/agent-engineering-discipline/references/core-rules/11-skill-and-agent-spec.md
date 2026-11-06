@@ -1,99 +1,99 @@
-# Core Rule 11: Skill Frontmatter & Multi-Agent Delegation (Skill 與 Subagent 雙層治理)
+# Core Rule 11: Skill Frontmatter & Multi-Agent Governance
 
-## 為什麼要制定此規則？ (Why)
-缺少 YAML Frontmatter 會導致相容本規範的 Agent 無法自動探索並動態載入 Skill。
-Developer Agent 自己寫程式碼又自己做假 Mock 驗證，容易陷入自圓其說的盲點。
-Skill 本身也是產出物，它另有三種與 Frontmatter 無關的失誤：入口檔把細節搬進來，同一條規則就有了兩份，兩份必然分歧；規則從某個專案萃取時把該專案的工具名一起帶走，安裝者拿到的是一句他無法執行的指令；先寫完規則再找情境驗證，寫出的內容針對想像的需求，而且沒有基線可以否證。
+## Why This Rule Exists (Why)
+Omitting YAML frontmatter prevents spec-compliant agents from discovering and dynamically loading a Skill.
+Meanwhile, when a developer agent writes implementation code and then writes its own mocked verification, it easily falls into confirmation bias.
+Because a Skill is itself a deliverable, it is vulnerable to three additional structural failures beyond frontmatter: copying detailed rules into `SKILL.md` creates two copies that inevitably drift apart; extracting a rule from a live session while leaving that project's internal tool names in the prose produces instructions that fail in every other repository; and drafting rules before establishing baseline failure evaluations produces speculative prose that cannot be falsified.
 
 ---
 
-## 具體執行方式 (How)
+## How to Execute (How)
 
-### 1. Skill YAML Frontmatter 標準
-必填欄位只有兩個，缺任一項不會被正確載入：
+### 1. Skill YAML Frontmatter Standard
+Only two fields are required; omitting either prevents the Skill from being discovered or loaded:
 
 ```yaml
 ---
 name: skill-name
-description: 白話說明該 Skill 做什麼、什麼時候載入它
+description: Plain statement of what the Skill does and when to load it
 ---
 ```
 
-其餘欄位皆為選填，非有特定需求不加——多一個欄位就多一份要維護且會過期的宣告。
-- **重構維護**：優化 `SKILL.md` 時**不得刪除 YAML Frontmatter**。
+All other spec fields (`license`, `compatibility`, `metadata`, `allowed-tools`) are optional—do not add them without a concrete operational need, as every extra field is another surface that can go stale.
+- **Preserve Frontmatter During Refactoring**: Never strip YAML frontmatter when editing or refactoring `SKILL.md`.
 
-**適用範圍限 `SKILL.md`。** `references/` 與 `assets/` 之下的檔案**不得**帶 frontmatter：它們不是可被探索的 Skill，那些欄位對任何 Agent 都不生效，只佔 context 並讓維護者誤以為它們會被獨立載入。判準是「這個檔案會不會被 Agent 當成 Skill 探索到」，答案是否就不該有 frontmatter。
+**Frontmatter applies exclusively to `SKILL.md`.** Files under `references/` and `assets/` **must never** contain YAML frontmatter: they are not standalone discoverable Skills, so frontmatter in those files has zero effect on any agent while wasting context tokens and misleading maintainers. The criterion is **"will an agent platform discover this file as a standalone Skill?"**—if no, it must not have frontmatter.
 
-#### `description` 的撰寫判準
+#### Criteria for Authoring `description`
 
-`description` 的唯一功能是支撐一個判斷：**這次要不要載入這個 Skill**。它常駐於 system prompt，且 Skill 一多時會依預算被截斷，被削掉的往往正是匹配所需的關鍵字。因此花在不服務該判斷的字上，代價是降低命中率。
+The sole purpose of `description` is to support one decision: **should the agent load this Skill for the current prompt?** Because `description` stays resident in the system prompt across every turn and gets truncated when many Skills are installed, every word that fails to sharpen that loading decision dilutes trigger accuracy.
 
-由此得到一條可操作的檢查：**刪掉其中任一句，若「要不要載入」的判斷不受影響，那句就該刪。**
+Apply a strict operational test to every clause in `description`: **if deleting that clause would not change the decision of whether to load the Skill, delete it.**
 
-四項成分缺一不可：
+Four components are mandatory:
 
-| 宣告要件 | 規範寫法 | 應避免形態 |
+| Required Component | Normative Form | Defect Form to Avoid |
 | --- | --- | --- |
-| 核心功能 | 具體動作與產出 | 分類標籤，例如「某某技能套件」 |
-| 適用時機 | 具體情境 | 抽象領域名，它幾乎涵蓋所有對話 |
-| 使用者觸發語句 | 依使用者真實語意與關鍵詞收錄 | 省略。這是匹配命中率的主要來源 |
-| 排除時機 | 明確界定排除區，列出易誤觸的相鄰情境 | 省略。只有正向觸發會擴散到不該載入的場合 |
+| Core capability | Concrete actions performed and artifacts produced | Vague category labels such as "A skill suite for..." |
+| Applicable scenarios | Specific task contexts where the Skill applies | Broad domain nouns that match almost every conversation |
+| User trigger phrases | Realistic user intents and keywords | Omitting triggers—this is the primary driver of recall |
+| Exclusion boundary | Explicit adjacent scenarios where the Skill must not load | Omitting exclusions—purely positive triggers over-fire |
 
-末句要是觸發指示，不是排除句。當前的失敗模式是該載入時不載入，排除區放句尾會讓判斷停在「不要用」上。排除區照寫，但擺在中段，末句留給「什麼情況一律載入」，並寫明即使使用者沒有說出本 Skill 的名字或關鍵詞也要載入。
+Place the exclusion boundary in the middle of `description` and reserve the final sentence for an explicit positive load directive, stating clearly when the Skill must be loaded even if the user never mentions the Skill by name. Putting a negative exclusion at the very end causes models to anchor on "do not use."
 
-四種不得出現：
+Four patterns must never appear in `description`:
 
-- **比喻與擬人**。它描述設計者腦中的圖像，不是使用時機。
-- **內部機制與載入方式**。「自動觸發」講的是平台行為，對要不要載入沒有貢獻。
-- **無判準的褒詞**。「完整」、「強大」、「全面」不構成選擇依據。
-- **同義反覆**。任何 Skill 都符合的句子，例如「規範 Agent 的行為」。
+- **Metaphors and personification**: They describe a mental image rather than a trigger condition.
+- **Internal platform mechanics**: Phrases like "automatically triggered" describe the host runtime, not when to select the Skill.
+- **Unmeasurable superlatives**: Words like "comprehensive," "powerful," or "robust" carry zero selection signal.
+- **Tautologies**: Statements true of any Skill, such as "guides agent behavior."
 
-判準寫成規則而不是靠自覺，是因為這類缺陷已重複發生：修過一輪之後，新建的 Skill 仍以比喻開頭。寫完 `description` 後逐項對照本表，是新增 Skill 的必要步驟。
+These criteria are codified as rules rather than left to intuition because the defect recurs repeatedly: even after one round of cleanup, newly created Skills still open with metaphors. Checking a new `description` against this table item by item is a mandatory step whenever authoring a Skill.
 
-本節的每一項都可機械驗證，**因此它靠腳本擋而不是靠自覺**。改完 Skill 後執行 `scripts/check_skill_spec.py`，用法見 `SKILL.md` 的「結構檢查」節。這正是規則該不該寫成硬約束的分界：能寫成腳本的就寫成腳本，語言只負責腳本判不出來的部分。
+Every structural requirement in this section is deterministically verifiable, **so it is enforced by script rather than by human vigilance**. Run `scripts/check_skill_spec.py` after editing any Skill; see the `Structure Check` section of `SKILL.md` for usage. This marks the exact boundary of when a rule should be a prose hard constraint: if a check can be mechanized in a script, put it in a script and reserve prose rules for what scripts cannot judge.
 
-### 2. 入口檔只放定位與指向 (Entry File Points, Not Restates)
+### 2. Entry File Points, Not Restates
 
-`SKILL.md` 是入口，不是內容的容器。三條判準：
+`SKILL.md` is a routing entrypoint, not a container for full rule bodies. Apply three criteria:
 
-- **概念層給模型，不給要求**：讓讀者知道自己處於哪個動作、當前需要防範哪一類失誤形態，要求本身留在它自己的檔案裡。把要求改寫一遍再附連結，等於讓同一條規則多出一份，兩份必然分歧。
-- **索引只給名稱、位置與一句範圍**：需要幫讀者決定該不該進去時，給的是什麼情況會用到它，不是它裡面有什麼。
-- **前言給這一節的目的，不描述這一節做什麼**：結構讀者看得見，再講一次不會讓它更清楚。
+- **The conceptual layer provides the mental model, not the rule text**: Show the agent which action it is in and what failure mode is at stake, while leaving the normative rule text inside its dedicated file under `references/`. Paraphrasing a rule in `SKILL.md` alongside a link creates a duplicate source of truth that will drift.
+- **Index tables state only the name, path, and a one-line scope**: Help the reader decide **when to open the file**, not summarize everything inside it.
+- **Section openings state the purpose of the section, never describe its layout**: The reader can already see the headings and tables; narrating "this section contains two tables" adds zero information.
 
-不訂章節樣板。不同性質的 Skill 貫穿線不同——規範型是工作動作的推進，稽核型是判斷的收窄順序——固定樣板會逼其中一種寫成不像自己的樣子。
+Do not force a single rigid heading template across all Skills. A governance Skill follows the chronological sequence of work actions, whereas an auditing Skill follows the narrowing sequence of diagnostic checks.
 
-對應的文字徵狀由 `deliverable-writing-audit` 的目錄定義，此處只定入口檔的結構判準。
+Corresponding prose symptoms are defined in the catalog of `deliverable-writing-audit`; this section defines only the structural criteria for the entrypoint file.
 
-### 3. 通用規則不得綁定單一專案的事實 (No Project-Specific Facts In Shared Rules)
+### 3. No Project-Specific Facts in Shared Rules
 
-Skill 會被安裝到你沒看過的專案。把某個專案的工具名、端點名、狀態值、業務名詞寫進通用規則，安裝者拿到的是一句他無法執行的指令——他的環境裡沒有那個東西。
+A published Skill will be installed into repositories its author has never seen. Leaving a source project's internal tool names, endpoint paths, status strings, or domain nouns inside a shared rule hands the installer an instruction that cannot execute in their environment.
 
-**判準**：每一個專有名詞都要能回答「這個名字在任何安裝本 Skill 的專案裡都存在嗎」。答案是否，就不能出現在規則裡。
+**Criterion**: Every proper noun in a shared rule must answer **"does this exact name exist in every project that installs this Skill?"** If the answer is no, replace it:
 
-| 專案特化項目（禁止） | 通用抽象規範（替代） |
+| Project-Specific Artifact (Prohibited) | General Normative Abstraction (Required Replacement) |
 | --- | --- |
-| 具體工具名、API 名、端點名 | 該工具**扮演的角色**，以及什麼算合格的來源 |
-| 具體狀態值、代碼、欄位名 | 該狀態的**語意類別**，例如「可逆的作廢狀態」 |
-| 特定業務領域名詞 | 通用對應詞，例如「外部系統記錄」而非某種單據名 |
-| 特定 Agent 平台或 CLI 的名稱 | 「相容本規範的 Agent」或「該平台的委派機制」 |
-| 特定專案名、repo 名、決策編號、工項編號 | 刪除，或改寫成不指名的敘述 |
+| Internal tool name, API name, or endpoint path | The **functional role** that tool plays, plus the criterion for what qualifies as an authoritative source |
+| Hardcoded status code or field name | The **semantic category** of that state, such as "a reversible cancellation state" |
+| Domain-specific business noun | General engineering term, such as "external system record" instead of an internal voucher type |
+| Specific agent platform or CLI name | "A spec-compliant agent" or "the platform's delegation mechanism" |
+| Internal project name, repo slug, ADR ID, or work item ID | Delete, or state the underlying problem pattern without internal identifiers |
 
-**具名的例外**：官方標準與公開規格可以具名，因為它們不隨專案改變——`OpenAPI`、`JSON Schema`、`JSON-RPC`、`git`、`Nygard ADR`、`YAML Frontmatter`。判準是「這個名字是公開標準，還是某個專案的內部命名」。
+**Exception for public standards**: Public specifications and universal tools do not vary by project and may be named directly—such as `OpenAPI`, `JSON Schema`, `JSON-RPC`, `git`, `Nygard ADR`, and `YAML Frontmatter`. The criterion is **"is this name a public standard or one project's internal naming?"**
 
-**範本不受此限**：`assets/` 的範本檔需要示範格式，裡面的編號與欄位值是佔位示例，不是規則。
+**Exception for templates**: Files under `assets/` exist to illustrate concrete formatting; placeholder IDs and sample fields inside `assets/` are format demonstrations, not shared rules.
 
-**為什麼要寫成規則而不是靠自覺**：這類洩漏的來源固定——規則是從某次真實工作階段裡萃取出來的，萃取時那個專案的工具名剛好在上下文裡，就順手寫了進去。當下讀起來很具體很有說服力，安裝到別的專案才發現指令無效。動手抽象一條規則時，這是必查項。
+**Why this must be an explicit rule rather than left to intuition**: The source of such leakage is always the same—a rule is distilled from a real working session where the source project's tool names were right in the active context and got written into the rule in passing. In the moment, those concrete names read naturally and persuasively; only when installed into another project does the instruction fail. Checking every proper noun against this table is mandatory whenever abstracting a rule.
 
-### 4. 先建評估再寫內容 (Evaluate First)
+### 4. Evaluate First
 
-判準是「這個 Skill 解的是實際發生過的失誤，還是我想像的需求」。
+The criterion is **"does this Skill solve a failure observed in real runs, or a hypothetical problem imagined by the author?"**
 
-順序是固定的：先在**不載入**該 Skill 的情況下跑代表性任務，記下它實際失敗在哪、缺哪一段脈絡；據此建立至少三個評估情境，並量出未載入時的基線；然後只寫剛好能讓評估通過的最小內容；之後跑評估、與基線比較、再修。
+Follow a fixed sequence: run representative tasks **without** the Skill loaded and record the exact points where the agent fails or lacks context; turn those failures into at least three evaluation scenarios and measure the unassisted baseline; write the minimal Skill content needed to address those failures; then re-run the evaluations against the baseline and iterate.
 
-反過來做——先寫完規則再找情境驗證——寫出的是針對想像需求的內容，而且無法被否證：沒有基線就判斷不出它改善了什麼。
+Reversing this order—writing a comprehensive rulebook first and looking for test cases afterward—produces untestable bloat with no baseline to prove whether the Skill helped or hurt.
 
-驗收不由撰寫者自己做。撰寫的工作階段與實際使用的工作階段要分開，後者不帶前者的脈絡。這與 [Core Rule 04](04-delegation-contract.md) 執行者不自證通過是同一件事，只是套在 Skill 開發上。
+Never let the session that authored the Skill self-certify its evaluation; run behavioral validation in a clean session with zero authoring context, matching the separation principle in [Core Rule 04](04-delegation-contract.md).
 
-### 5. Subagent 雙層治理 (Developer vs Validator)
-- **Developer Agent (主開發者)**：負責撰寫程式碼、修改邏輯與準備工項。
-- **Validator Subagent (驗證者)**：涉及到 MCP 工具實測或自然語言互動時，由 Developer 委派獨立 Subagent 以自然語言走實測流程，確保介面易用性。
+### 5. Two-Tier Subagent Governance (Developer vs. Validator)
+- **Developer Agent (Primary Executor)**: Writes code, updates specifications, and prepares work items.
+- **Validator Subagent (Independent Verifier)**: When verifying MCP tools or end-to-end natural-language workflows, delegate verification to an independent subagent with a clean context window to exercise the real user interface without author bias.

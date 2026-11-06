@@ -1,130 +1,133 @@
-# Core Rule 10: Harness Document Layout (AGENTS.md 正本與參照分工)
+# Core Rule 10: Harness Document Layout
 
-## 目錄 (Contents)
+## Contents
 
-- 1. 正本與參照的分工：`AGENTS.md` 是唯一正本，其他入口檔只留參照
-- 2. `AGENTS.md` 的版式：四節順序、規則條目的寫法、兩種強度、力度用詞與清單標記
-- 3. `docs/` 與 `references/` 的分工：判準是誰產出的，不是講什麼主題
-- 4. 刻意的重複必須寫明理由
-- Gotchas：兩個文件目錄最容易放反的情形、給人讀的入口不是雜項收容處
+- 1. Canonical Source vs. Pointers: `AGENTS.md` is the single canonical source; other entrypoints contain only a pointer
+- 2. Canonical Structure of `AGENTS.md`: Four ordered sections, rule formatting, binary deontic strength, fixed modal verbs, and list exhaustiveness markers
+- 3. Division Between `docs/` and `references/`: The criterion is who authors the file, not its topic
+- 4. Declared Duplication: Valid only across an always-loaded vs. conditionally-loaded boundary
+- Gotchas: Confusing two documentation directories when topics overlap, and treating human entrypoints as a miscellaneous catch-all
 
-## 為什麼要制定此規則？ (Why)
-`AGENTS.md` 是跨工具的通用約定，各家 coding agent 都會讀；`CLAUDE.md` 只有 Claude Code 讀。把規範寫進 `CLAUDE.md`，換一個工具就全部失效；兩邊各寫一份，則一定會不同步，然後兩個 Agent 讀到不同版本的規則。
+## Why This Rule Exists (Why)
+`AGENTS.md` is the cross-platform convention read by multiple coding agents, whereas `CLAUDE.md` is read only by Claude Code. Putting governance rules directly inside `CLAUDE.md` leaves other agents unguided; maintaining full copies in both files guarantees they will drift out of sync.
 
-同樣的分裂也發生在參考資料上。`docs/` 與 `references/` 若沒有明確分工，業務文件與工程規範會混在一起，Agent 讀完不知道哪些是必須遵守的約束、哪些只是背景知識。
+The same split occurs between documentation folders. Without a clear boundary between `docs/` and `references/`, project-authored records and read-only external reference specs get mixed together, leaving agents unable to tell which files they are supposed to maintain and which files are immutable external contracts.
 
 ---
 
-## 具體執行方式 (How)
+## How to Execute (How)
 
-### 1. 正本與參照的分工 (One Source, Many Pointers)
+### 1. One Source, Many Pointers
 
-| 檔案 | 角色 | 內容 |
-| --- | --- | --- |
-| `AGENTS.md` | **唯一正本** | 全部規範內容 |
-| `CLAUDE.md` | 參照 | 一行標題 + `@AGENTS.md`，不含任何規範內容 |
-| 其他 agent 的入口檔 | 參照 | 同上，各依該工具的匯入語法指向 `AGENTS.md` |
+| File | Supported Platform | Role | Permitted Content |
+| --- | --- | --- | --- |
+| `AGENTS.md` | Universal Standard / All Platforms | **Canonical Source (SSOT)** | All workspace governance rules and architectural mappings |
+| `CLAUDE.md` | Claude Code | Platform Pointer | One H1 title line + `@AGENTS.md`, with zero rule prose |
+| `.github/copilot-instructions.md` | GitHub Copilot | Platform Pointer | Pointer line referencing `AGENTS.md` (e.g. `See AGENTS.md for workspace rules.`) |
+| `.cursor/rules/agents.mdc` / `.cursorrules` | Cursor / Windsurf | Platform Pointer | Rule configured to always apply and pointing to `AGENTS.md` |
+| `GEMINI.md` | Gemini CLI / Antigravity | Platform Pointer | Native `AGENTS.md` support; if a dedicated file is needed, point to `AGENTS.md` |
+| Other agent entrypoints | Respective Platforms | Platform Pointer | Same principle, using each platform's native include syntax pointing to `AGENTS.md` |
 
-`CLAUDE.md` 的完整內容就是這樣，不要再多寫：
+Taking Claude Code as an example, the complete content of `CLAUDE.md` must be these two lines and nothing else:
 
 ```markdown
-# Claude Code — <專案名>
+# Claude Code — <Project Name>
 
 @AGENTS.md
 ```
 
-`@AGENTS.md` 是 Claude Code 的匯入指令，載入時會把 `AGENTS.md` 的內容展開進 context。因此 `CLAUDE.md` 裡任何額外的規範文字都是第二份副本。
+`@AGENTS.md` is Claude Code's native import directive, which expands `AGENTS.md` into context at load time. Any additional prose placed in `CLAUDE.md` creates a redundant second source of truth. If a project is primarily driven by another agent (such as GitHub Copilot or Cursor), create the platform-specific pointer file pointing to `AGENTS.md`; creating unused entrypoint files is not required.
 
 > [!NOTE]
-> 本節具名特定工具是**刻意的**，不違反 [Core Rule 11](11-skill-and-agent-spec.md)。這一節的主題就是各工具入口檔的分工，檔名與匯入語法本身即規則內容，換成通用敘述反而無法執行。其他工具依各自的匯入語法照同一模式建立入口檔。
+> Naming specific agent files here is **intentional** and does not violate [Core Rule 11](11-skill-and-agent-spec.md). Because this section defines the exact entrypoint filenames and import syntax across agent platforms, replacing them with generic placeholders would make the rule unexecutable.
 
-### 2. `AGENTS.md` 的版式 (Canonical Structure)
+### 2. Canonical Structure of `AGENTS.md`
 
-依序排列，讓 Agent 先知道邊界再知道規則：
+Arrange `AGENTS.md` in four sequential sections so the agent learns its boundaries before reading specific rules:
 
-1. **專案定位與產出物**：這個 repo 是什麼、產出物是哪些、每個對象的修改邊界。用表格。
-2. **檔案結構**：路徑對應內容。用表格。
-3. **Skills 分類與定位**：專案內有哪些 Skill、各自的類型與職責、彼此不可互相取代的理由。用表格。
-4. **核心開發規則 (Constraints)**：按領域分組，每組拆 `#### Always` 與 `#### Never` 兩節。
+1. **Project Positioning & Deliverables**: What this repository is, what it produces, who consumes each output, and the modification boundary for each target. Present as a table.
+2. **File Structure**: Directory paths mapped to their contents and ownership. Present as a table.
+3. **Skills Classification & Positioning**: Which Skills exist in the workspace, their type (`Governance` / `Auditor` / `Execution`), their responsibilities, and why they do not replace one another. Present as a table.
+4. **Core Development Rules (Constraints)**: Grouped by domain, with each domain split into `#### Always` and `#### Never`.
 
-規則條目以**粗體提要詞**開頭，後接冒號與內容，讓 Agent 掃標題就能定位：
+Start every rule bullet with a **bold summary label** followed by a colon and the rule body so agents can locate rules by scanning labels:
 
 ```markdown
 #### Never
 
-- **未經授權提交**：`git commit`、`git push`、開 PR 一律需要使用者當次明確指示。
+- **[Hard Constraint] No Unauthorized Commit**: `git commit`, `git push`, and opening PRs require explicit user instruction in the current turn.
 ```
 
-**規則要分兩種強度。** 違反後不可復原或影響第三方的寫成硬約束，措辭用祈使句，並在條目前加 `【硬約束】`；其餘寫成判準，給出判斷依據與失敗長什麼樣，讓 Agent 依情境決定。
+**Separate rules into two deontic strengths.** Rules whose violation is irreversible or affects third parties are written in the imperative mood and prefixed with `[Hard Constraint]`; all other rules are written as **criteria**, stating the judgement basis and the observable failure mode so the agent can exercise situational judgement.
 
-全部同一強度時，Agent 無法區分哪些是不可逆的硬約束底線、哪些是具備情境裁量空間的判準，只能一律照字面執行，在不適用的情境反而製造錯誤。分級的判準與本 Skill 的硬約束清單見 `SKILL.md` 的「摘要」與「硬約束」兩節。
+When every rule is written at maximum strength, the agent cannot tell which boundaries are genuinely irreversible and ends up applying context-dependent heuristics rigidly in situations where they cause errors. For the distinction between strengths and the complete list of hard constraints, see the `Abstract` and `Hard Constraints` sections of `SKILL.md`.
 
-**同一強度用固定的詞。** 禁令一律用「不得」，義務一律用「必須」。同一強度換用不同的詞，讀者會以為強度有差異而去猜哪個更重，於是每個詞都要重新解讀一次。
+**Use fixed modal verbs within each strength.** Prohibitions always use `must never` or `must not`; obligations always use `must`. Rotating among synonyms (`shall not`, `may not`, `is forbidden to`, `should avoid`) tricks readers into guessing whether different verbs imply different priority tiers.
 
-**清單要標明是窮舉還是示例。** 窮舉用「只有」起頭或直接寫出數量，示例用「例如」起頭。中文不強制標記兩者的差異，未標記的開放示例會被讀成封閉清單，清單外的同類情形因此被當成不受規範。
+**Mark lists as exhaustive or illustrative.** Introduce exhaustive enumerations with `only` or an explicit count (`the four values below`); introduce open examples with `for example` or `such as`. Unmarked lists in technical specifications are frequently misread as closed enumerations, causing agents to treat unlisted cases as exempt.
 
-需要強調的前提用 `> [!IMPORTANT]` 或 `> [!NOTE]` 標註，不要用括號夾在正文裡。全篇繁體中文，技術術語保留英文原文。
+Highlight critical preconditions using `> [!IMPORTANT]` or `> [!NOTE]` callouts rather than burying them in parenthetical asides.
 
-### 3. `docs/` 與 `references/` 的分工 (Own Output vs External Reference)
+### 3. Own Output vs. External Reference (`docs/` vs. `references/`)
 
-**判準只有一個：這份文件是本專案產出的，還是外部既有、本專案只能對照的？**
+**There is only one criterion: is this file authored and maintained by this project, or is it an external artifact that this project only reads as a reference?**
 
-- **`docs/`**：本專案自己產出、會持續更新的文件。專案與業務相關的內容都在這裡。
-- **`references/`**：不是本專案產出、本專案不修改、但 Agent 判斷時必須據以對照的既有事實。屬支撐開發判斷的工程參照。
+- **`docs/`**: Files authored and continuously updated by this project—including work items, ADRs, architecture specs, and investigation reports.
+- **`references/`**: Pre-existing external artifacts not authored by this project and never modified by this project, kept locally so agents can verify facts against them.
 
-#### 落點表
+#### Directory Mapping
 
-| 內容 | 落點 |
+| Content Type | Target Directory |
 | --- | --- |
-| 工項與驗證截圖 | `docs/tasks/`、`docs/tasks/screenshots/` |
-| ADR 決策紀錄 | `docs/decisions/` 或 `.claude/decisions.md`，依專案既有慣例擇一 |
-| 需求、規格、研究報告、比較分析、整合報告 | `docs/` |
-| backlog、測試情境腳本、對話紀錄 | `docs/` |
-| 外部 repo 的程式碼或設定副本 | `references/` |
-| 既有部署腳本、`Dockerfile`、pipeline 樣本 | `references/` |
-| 專案結構樣式範例 | `references/` |
-| 產出物專案的映射指南、交付目標定義 | `references/` |
-| 產出物的業務應用情境與驗收前提 | `references/` |
-| 平台契約、欄位對照等靜態參考資料 | `references/` |
+| Work items and verification screenshots | `docs/tasks/`, `docs/tasks/screenshots/` |
+| Architecture Decision Records (ADRs) | Project-convention ADR path, such as `docs/decisions/`, `.agent/decisions.md`, or `.claude/decisions.md` |
+| Requirements, specifications, research reports, comparative analyses, integration reports | `docs/` |
+| Backlogs, test scenario scripts, session transcripts | `docs/` |
+| Snapshots of external repository code or configuration | `references/` |
+| Upstream deployment scripts, `Dockerfile` samples, pipeline definitions | `references/` |
+| Project layout and structure templates | `references/` |
+| Target project mapping guides and delivery target schemas | `references/` |
+| Business application scenarios and acceptance preconditions for target deliverables | `references/` |
+| External platform contracts and static field lookup tables | `references/` |
 
 #### Never
 
-- **改動 `references/` 的內容**：它是別人的正本，本專案只讀。需要變更就到來源 repo 處理，或在 `docs/` 建立工項說明落差。
-- **把 agent 執行用的正本放進 `docs/`**：那屬於 `.claude/skills/`。`docs/` 是給人與開發者 Agent 讀的紀錄，不是任務執行指令。
+- **Never modify files under root `references/`**: They belong to upstream sources and are read-only in this workspace. If an upstream contract changes, update it in the source repository or log a work item under `docs/tasks/` documenting the discrepancy.
+- **Never place runtime agent skills inside `docs/`**: Runtime skills belong in platform-convention skill directories (such as `.agent/skills/`, `.claude/skills/`, or `skills/`). `docs/` holds human and developer records, not runtime instructions.
 
 > [!IMPORTANT]
-> **`references/` 這個名字在兩個層級有不同語意，不要混用。** 專案根目錄的 `references/` 是上述的外部參照物；Skill 目錄內的 `references/`（`skills/<name>/references/`）是該 Skill 漸進揭露用的細節文件，屬 Skill 正本的一部分，規範見 [Core Rule 11](11-skill-and-agent-spec.md)。兩者都可能出現在同一個專案裡。
+> **The directory name `references/` carries different semantics at two levels—never conflate them.** Root-level `<repo>/references/` holds read-only external snapshots as defined above; skill-level `skills/<name>/references/` holds the progressively disclosed rule files that belong to that Skill's own canonical source, governed by [Core Rule 11](11-skill-and-agent-spec.md). Both can coexist in the same repository.
 
-**為什麼判準要用「誰產出的」而不是「講業務還是講開發」**：後者在邊界上判不出來。產出物的業務應用情境既是業務也是開發前提，交付映射指南既講架構也講流程。改用產出歸屬就沒有模糊地帶——本專案寫的進 `docs/`，本專案只能讀的進 `references/`。分錯的代價是 Agent 去改一份它無權修改的外部正本，或把唯讀參照當成本專案的待辦來維護。
+**Why the criterion is "who authors it" rather than "is it business or engineering"**: Topical boundaries blur in practice—business application scenarios for target deliverables are both domain context and engineering preconditions, while a delivery mapping guide covers both architecture and workflow. Authorship has zero ambiguity: if this project writes and evolves it, put it in `docs/`; if this project only reads it to check external facts, put it in `references/`. The cost of misclassifying is that an agent either modifies an external source of truth it has no authority to touch, or treats a read-only reference as an active project backlog to maintain.
 
-### 4. 刻意的重複必須寫明理由 (Declare Accepted Duplication)
+### 4. Declare Accepted Duplication
 
-**成立的前提只有一個：重複的兩方，一方永遠載入、另一方條件載入。** `AGENTS.md` 永遠載入，Skill 條件載入，因此把最關鍵的幾條約束在 `AGENTS.md` 重述一次是正當的——若全靠連結，沒載入 Skill 的工作階段就沒有任何約束。
+**Intentional duplication is valid under only one condition: one location is always loaded into context, and the other is conditionally loaded.** Because `AGENTS.md` is loaded in every session while a Skill is loaded only when triggered, repeating the most critical hard constraints in `AGENTS.md` is justified—otherwise a session that fails to trigger the Skill would operate without safety rails.
 
-這種重複必須在載入端寫明是刻意的並指出正本位置，否則下一輪稽核會把它當成缺陷「修掉」，反而移除了保護。
+Whenever you introduce such intentional duplication, add an explicit note in the always-loaded file stating that the overlap is deliberate and pointing to the canonical source in the Skill; otherwise a subsequent writing audit will flag and delete it as a `C4 Scattered Duplicate Rules` defect.
 
-**前提不成立時，宣告不能讓重複變得正當。** 兩方都是條件載入時，副本在正本缺席時同樣缺席，提供不了任何保護，卻照樣佔 context——這種重複一律刪除，不是補一句宣告了事。最容易誤判的是 Skill 內部：`references/` 之下的檔案彼此都是條件載入，其中任何一份重述另一份的內容都不適用本條。
+**When that precondition does not hold, a declaration never makes duplication valid.** If both files are conditionally loaded—such as two files under `skills/<name>/references/`—repeating a rule across them adds zero safety while doubling maintenance and context cost. Delete the duplicate copy and replace it with a relative link.
 
-沒寫明理由的重複視為缺陷；寫了理由但前提不成立的重複，缺陷在理由本身。
+Undeclared duplication is a defect; declared duplication whose precondition does not hold is a defect in the rationale itself.
 
 ---
 
 ## Gotchas
 
-以下來自實際發生的失誤，不是從規則推導出來的。
+From real failures, not derived rules.
 
-### 兩個文件目錄的分工，用途相近時最容易放反
+### Two Documentation Directories Are Most Easily Flipped When Their Topics Overlap
 
-**什麼情況會踩到**：手上有一份文件，它既與專案的業務有關，又是工程流程的一部分。兩個目錄看起來都放得進去。
+**When it happens**: You have a document that discusses both the project's domain logic and an external platform's engineering constraints, making both `docs/` and `references/` look plausible.
 
-**為什麼當下不會察覺**：判斷當下依據的是文件的主題，但分工的依據是**讀者與生命週期**——專案自己的產出物，與外部參照的規範，兩者的更新時機與擁有者不同。依主題判斷時，主題橫跨兩邊的文件就會落錯位置。分工的界線是：與專案或業務有關的放一邊，屬於工程規範的放另一邊。
+**Why it goes unnoticed**: In the moment, you classify the file by its subject matter, whereas the directory boundary is defined by **authorship and mutation lifecycle**—files this project owns and edits vs. read-only external artifacts. Classifying by subject matter causes cross-cutting files to land in the wrong directory.
 
-**判準**：放置前先問這份文件由誰維護、隨什麼一起變動。專案自己產出、隨專案演進的歸專案目錄；跨專案通用、隨規範演進的歸規範目錄。判不出來時看它被修改的原因會是什麼。
+**Criterion**: Before placing a file, ask who maintains it and what triggers an edit. If it evolves with this project's own tasks, place it in `docs/`; if it is an external baseline kept for read-only lookup, place it in `references/`.
 
-### 給人讀的入口不是雜項的收容處
+### A Human Entrypoint Is Not a Catch-All Drawer
 
-**什麼情況會踩到**：某段說明不知道該放哪裡，而入口文件反正是給人讀的，放進去看起來無害。
+**When it happens**: You have a useful note or operational detail with no obvious home, and dropping it into `README.md` feels harmless because `README.md` is already meant for humans.
 
-**為什麼當下不會察覺**：每一段單獨看都與這個專案有關，而且是真的。累積之後入口文件變成清單，讀者要自己挑出安裝與使用需要的部分。被指出時一併被問到的是：既有的規範自己有沒有遵守。
+**Why it goes unnoticed**: Each added paragraph is factually accurate and relevant to the project. Over several iterations, however, the entrypoint balloons into an unstructured compendium, burying the installation and quick-start steps a new reader actually needs.
 
-**判準**：入口文件只放讀者第一次接觸時需要的內容。判斷方式是問這段拿掉之後，讀者還能不能完成安裝與初次使用；能，就移到它該去的地方。
+**Criterion**: Keep the human entrypoint focused strictly on what a first-time reader needs to understand, install, and start using the project. The criterion is **"if we remove this section from `README.md`, can a new user still install and use the project?"** If yes, move that content to its dedicated reference or documentation file.

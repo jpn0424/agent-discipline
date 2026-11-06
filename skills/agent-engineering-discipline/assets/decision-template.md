@@ -1,25 +1,25 @@
 # Architecture Decisions Log (ADR)
 
-## AD-0001: 決策標題
-> 【必填】當架構或設計決定被推翻時，後人需要知道當初為什麼這樣定。採只增不修原則，若推翻舊決策請開立新決策並標記取代。
+## AD-0001: Decision Title
+> [REQUIRED] Append-only Nygard ADR; supersede to change.
 
-- **日期**：YYYY-MM-DD
-- **狀態**：`[Accepted]` / `[Superseded by AD-0002]`
+- **Date**: YYYY-MM-DD
+- **Status**: `[Accepted]` / `[Superseded by AD-0002]`
 
-### Context (背景)
-> 【必填】說明導致此決策發生的問題、業務需求、技術限制或觸發事件。
+### Context
+> [REQUIRED] State problem, constraints, and trigger.
 
-說明導致此決策發生的問題與背景脈絡。
+Describe the problem, technical constraints, or triggering event that required this decision.
 
-### Decision (決策)
-> 【必填】說明拍板採取的方案與論據，並寫出被否決的方案與否決理由。
+### Decision
+> [REQUIRED] Record chosen and rejected options.
 
-只寫結論，後人看得到結果卻看不到邊界，會把否決過的方案再提一次。
+Recording only the winner hides the boundary conditions, causing future contributors to re-propose options that were already evaluated and rejected.
 
-- **採取**：說明方案內容與拍板依據。
-- **否決**：說明方案內容與否決考量。
+- **Chosen**: State the selected design and the rationale for adopting it.
+- **Rejected**: State each rejected alternative and the specific reason it was ruled out.
 
-### Consequences (影響與結果)
-> 【必填】說明此決策帶來的正面效應、架構代價、妥協點與後續約束。
+### Consequences
+> [REQUIRED] State benefits, costs, and obligations.
 
-說明正面效應與代價。
+Describe the positive outcomes, architectural trade-offs, and downstream constraints introduced by this decision.

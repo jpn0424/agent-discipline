@@ -1,26 +1,26 @@
-# 測試先行 (Test-First)
+# Test-First
 
-紅綠迴圈採測試驅動開發的既有定義，此處不重述。撰寫或修改邏輯、設定或服務組裝時採用它，本檔只寫該定義沒有涵蓋、而在 Agent 情境下會出錯的兩件事。
+The red-green-refactor cycle follows the standard definition of Test-Driven Development (TDD) and is not restated here. Apply it when writing or modifying code logic, configuration, or service wiring; this file records only the two deltas where agents repeatedly fail in practice.
 
-## 測試的層級由改動對象決定
+## The Target of the Change Determines the Test Level
 
-「測試」不等於單元測試。層級選錯會讓這個方法在某些任務上無法執行，於是被整個略過。
+"Test" does not mean "unit test." Picking the wrong test level makes test-first appear unexecutable for infrastructure or wiring tasks, causing the agent to skip testing altogether.
 
-| 改動對象 | 測試層級 | 斷言標的 |
+| Target of Change | Test Level | Subject of Assertion |
 | --- | --- | --- |
-| 程式邏輯、資料轉換、演算法 | 單元測試，隔離外部依賴 | 輸入對應到預期輸出 |
-| 對外介面、服務組裝、容器與代理設定、部署配置 | 驗收測試，對實際啟動的目標發出請求 | 可觀察的外部行為與暴露面 |
+| Code logic, data transformations, algorithms | Unit test, isolating external dependencies | Input maps to the expected output |
+| External interfaces, service wiring, container/proxy config, deployment manifests | Acceptance test, sending requests to the live running target | Observable external behavior and exposed surface |
 
-兩者可以並存：先以驗收測試定義目標狀態並讓它紅燈，再以單元測試推進內部實作，內部完成後驗收測試自然轉綠。
+Both levels can work together: define the target behavior with a failing acceptance test first, drive internal logic with unit tests, and watch the acceptance test turn green once wiring is complete.
 
-**沒有單元測試可寫的改動，只用驗收測試驅動即可。** 容器設定、反向代理規則、部署腳本這類改動，斷言的對象是啟動後的實際行為，不是某個函式的回傳值。不要為了滿足形式而造出測不到東西的單元測試——那會讓綠燈失去意義。
+**When a change has no unit-testable surface, drive it with an acceptance test alone.** Container definitions, reverse-proxy rules, and deployment scripts assert behavior on the running service, not the return value of a function. Never write trivial mock-heavy unit tests just to check a box—doing so renders a green test suite meaningless.
 
-## 紅燈要紅在對的地方
+## The Red Test Must Fail for the Right Reason
 
-驗收測試在目標尚未啟動時必然失敗，但「連線被拒」與「回應內容不符預期」是兩種不同的紅。前者只證明目標還沒起來，後者才證明斷言真的在檢查行為。
+An acceptance test against a service that has not started will always fail, but "Connection Refused" and "Response Payload Mismatch" are two completely different red states. The former only proves the service is down; only the latter proves the assertion is actually inspecting behavior.
 
-實作完成、目標啟動之後，至少要看過一次測試因**斷言不符**而失敗，才能確認它不是永遠會過的空測試。
+After the target service is up and wired, verify that the test fails at least once due to an **assertion mismatch** before making it pass, confirming that the test is not a tautology that passes unconditionally.
 
-## 相關
+## Related Rules
 
-測試失敗時把錯誤原文完整填回對話再修，不摘要，見 [Core Rule 08](../core-rules/08-honesty-and-evidence.md)。測試暫存檔的清理方式與保留邊界見 [Core Rule 05](../core-rules/05-execution-safety.md)。完成判準的可判定性要求見 [Core Rule 04](../core-rules/04-delegation-contract.md)。
+When a test fails, paste the verbatim error output into the conversation before fixing it; see [Core Rule 08](../core-rules/08-honesty-and-evidence.md). For recoverable cleanup of temporary test files and retention of external test records, see [Core Rule 05](../core-rules/05-execution-safety.md). For decidability of acceptance criteria, see [Core Rule 04](../core-rules/04-delegation-contract.md).

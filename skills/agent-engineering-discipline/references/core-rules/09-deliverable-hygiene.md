@@ -1,73 +1,73 @@
-# Core Rule 09: Deliverable Hygiene & Architecture Decisions (交付物純化與 ADR)
+# Core Rule 09: Deliverable Hygiene & Architecture Decisions
 
-## 為什麼要制定此規則？ (Why)
-交付給客戶或發布至公開倉庫的程式碼包中，若包含 `/Users/<使用者>/...` 這類本機絕對路徑或內部開發術語，會造成資安漏洞與品質粗糙感。
-架構決策缺乏紀錄則會導致後續開發者隨意破壞前人拍板的技術邊界。
-這兩件事都靠寫的當下想起來，而最常見的失誤正是沒想起來，因此交付前還需要一道不倚賴撰寫者自覺的獨立掃描。
+## Why This Rule Exists (Why)
+Shipping code or documentation packages that contain local absolute paths like `/Users/<user>/...` or internal developer jargon leaks host topology and signals draft-quality work.
+Meanwhile, leaving architectural decisions unrecorded causes future contributors or agents to unknowingly re-introduce designs that were already evaluated and rejected.
+Because both failures happen when the author is focused on implementation details rather than final presentation, pre-delivery verification requires an independent scan rather than relying on author memory alone.
 
 ---
 
-## 具體執行方式 (How)
+## How to Execute (How)
 
-### 1. 交付物純化 (Deliverable Hygiene)
+### 1. Deliverable Hygiene
 > [!IMPORTANT]
-> **硬約束。** 照字面執行，沒有判斷空間——違反後不可復原或影響第三方。
+> **Hard constraint:** Zero discretion.
 
-**產出物與交付物不是同義詞。** 產出物是工作過程中產生的一切，含工項、決策紀錄與內部規範；交付物是其中會交到對方手上、由對方驗收的那些。本節管的是交付物。
+**Artifacts and deliverables are not synonyms.** Artifacts encompass everything produced during work—including work items, ADRs, and internal harness notes—whereas deliverables are the specific subset handed over to and accepted by an external recipient or published repository. This section governs deliverables.
 
-- **消除本機絕對路徑**：交付檔內文不得出現本機絕對路徑，例如 `/Users/<使用者>/...`，也不得出現機敏密碼；兩者必須改為相對路徑或語意化佔位符。
-- **語意與語言標準**：文件採用 **繁體中文 (zh-TW)** 撰寫，專有名詞維持英文原文，例如 Git、API、Payload、Schema。
-- **不混用文言虛詞**：以現代書面語撰寫，「之」、「其」、「者」不用於「的」、「它的」、「的人」可以表達的位置。同一份文件內兩種語體交錯，讀者要多分辨一次語域。
-- **括號只用於中英對照與符號強調**：需要解釋就寫成正文，需要界定就換一個不會歧義的詞。補述性的括號會把主幹切碎，逐條徵狀見 `deliverable-writing-audit` 的目錄。
+- **Eliminate Local Absolute Paths and Secrets**: Deliverables must never contain local absolute paths such as `/Users/<user>/...`, `/home/<user>/...`, or `C:\Users\<user>\...`, nor any real credentials or internal hostnames; replace them with relative paths or semantic placeholders (`<SERVICE_BASE_URL>`, `<API_KEY>`).
+- **Language and Terminology Standard**: Write in clear, direct standard English (`en-US`); preserve canonical technical identifiers and protocol names verbatim (such as `Git`, `OpenAPI`, `JSON-RPC`, `Payload`, `Schema`).
+- **No Pseudo-Legal or Archaic Adverbs**: Write in plain modern technical prose; do not use archaic or legalese particles (`heretofore`, `thereof`, `wherein`, `therein`, `vis-à-vis`, `aforementioned`, `henceforth`) where direct determiners or prepositions (`its`, `in which`, `about`, `this`) suffice. Mixing registers forces the reader to parse stylistic ornament instead of operational rules.
+- **Parentheses Reserved for Acronym Definitions and Symbols**: If a point requires explanation, write it as a full sentence in the body; if a term is ambiguous, replace it with an exact term. Stuffing causal explanations or backstory into parentheses fractures the main clause—see `B2 Parenthetical Gloss` in `deliverable-writing-audit`.
 
 > [!NOTE]
-> 本節的硬約束標記只涵蓋上面第一項。**語言標準是判準**——違反它不會造成不可復原的後果，也不影響第三方，收錄門檻不成立。它與第一項同節是版面歸類的結果，不是強度相同。專案有自己的語言慣例時以專案為準。
+> The hard constraint tag in this section applies strictly to the first bullet (credentials and local paths). **Language and register rules are criteria**—violating them does not cause irreversible damage or harm third parties. They sit in the same section for topical grouping, not equal deontic force; when a target project defines its own language conventions, the project's conventions take precedence.
 
-### 2. Nygard ADR 決策紀錄 (`decisions.md`)
+### 2. Nygard ADR Records (`decisions.md`)
 
-判準是「這個決定被推翻時，後人需不需要知道當初為什麼這樣定」。答案是需要，就記進專案既有的決策檔，採 Nygard ADR 格式；答案是不需要，寫進工項即可。初次導入時可複製 `assets/decision-template.md` 至 `docs/decisions/decisions.md`（或專案約定之決策檔位置）。每筆決策紀錄包含背景、決策與影響三個小節；決策小節除了寫下採取的方案，也要寫出被否決的方案與否決理由。
+The criterion is **"if someone overturns this decision later, will they need to know why we chose this boundary and why the alternatives failed?"** If yes, record it in the project's decision log using the Nygard ADR format; if no, recording it in the work item is sufficient. When initializing a decision log for the first time, copy [assets/decision-template.md](../../assets/decision-template.md) to `docs/decisions/decisions.md` (or the project's established path). Each ADR entry contains three sections—`Context`, `Decision`, and `Consequences`—and the `Decision` section must record **both the chosen option and the rejected options with their rejection reasons**.
 
-已寫下的決策改成只增不修：要推翻就新增一筆並聲明覆蓋舊決策，不回頭改內容。理由是決策紀錄的價值在於保留當時的判斷依據，改掉它就等於沒有紀錄。準備修改架構、規則或目錄結構前，若專案設有決策檔，必須先讀取確認既有決策邊界與曾被否決的方案，避免重提已否決的做法。
+Treat recorded ADRs as append-only: to overturn a prior decision, append a new ADR entry and mark the old entry `Superseded by AD-xxxx` rather than editing historical rationale in place. Before modifying architecture, governance rules, or directory layout in a project that maintains a `decisions.md`, read the existing entries first so you do not re-propose a previously rejected design.
 
-### 3. 交付前書寫稽核 (Writing Audit Gate)
+### 3. Pre-Delivery Writing Audit Gate
 
-判準是「這段文字會不會被別人引用」。Harness 文件、Skill 正本、工項、ADR、交付物、commit message、PR 內容都會，因此它們在寫之前就要先確認交付情境，寫完之後、回報之前要掃一次。
+The criterion is **"will other files, agents, or humans cite this text as a reference?"** Harness files, Skill specifications, work items, ADRs, deliverables, commit messages, and PR descriptions all qualify—confirm their delivery profile before writing, and scan them after writing before reporting completion.
 
-- **動手前**：確認要寫的內容屬於哪個交付情境。給開發者讀、給 agent 執行、對外交付、工項、變更紀錄、PR——容忍度不同，寫法就不同。
-- **完成後、回報前**：以 `deliverable-writing-audit` 的 detect 模式掃過改動的每個檔案。有偵測腳本的專案一併執行，並把結果附在回報裡。
-- **命中不等於錯誤**：逐條對照該 Skill 的例外條件後判讀，放過的項目也說明為什麼放過。
-- **腳本全綠不等於通過**：偵測腳本只驗得了形式。標題回音、該結構化卻寫成流水句、規則重複散落這類要讀懂語意才判得出來的徵狀，它一個都抓不到。這些必須由人或另一個 agent 依徵狀目錄逐段讀過，讀了才算稽核過。拿腳本的結束碼當稽核結論，是把量測工具的涵蓋範圍當成了事實的範圍，見 [Core Rule 08](08-honesty-and-evidence.md)。
+- **Before writing**: Identify which delivery profile applies (`harness`, `agent-facing`, `deliverable`, `ticket`, `changelog`, or `pr-commit`), as tolerance levels vary by profile.
+- **After writing, before reporting**: Run `deliverable-writing-audit` in `detect` mode across every modified file. If the project includes `detect.py`, execute it and include the result in your verification output.
+- **A hit is not automatically an error**: Check each hit against the `Exceptions` field in `pattern-catalog.md`, and note in your report why any kept hit is a valid exception.
+- **Exit code `0` from the script is not a full pass**: `detect.py` only catches surface mechanical shapes. Semantic symptoms—such as `B4 Heading Echo`, `C2 Unstructured Prose for Enumerable Facts`, or `C4 Scattered Duplicate Rules` (when paraphrased)—require reading the text paragraph by paragraph against `pattern-catalog.md`. Treating a green script exit code as proof of semantic quality confuses the instrument's reach with reality; see [Core Rule 08](08-honesty-and-evidence.md).
 
-**為什麼要在交付前而不是被指正後**：最常見的失誤不是不知道規則，是寫的時候沒想起來。文字一旦交付就會被下游引用，錯誤成本從「改一個字」變成「追一串引用」。
+**Why audit before delivery rather than after user correction**: Most writing defects happen not because the author is unaware of the rules, but because attention is consumed by code logic during drafting. Once a flawed specification is delivered, downstream files cite it, multiplying the cost of a single fix.
 
-**分工**：本 Skill 只定義「什麼時候必須稽核」。徵狀清單、嚴重度、情境寬容矩陣、改寫時的編輯者約束全部由 `deliverable-writing-audit` 定義，此處不重述。上述交付物純化的絕對路徑與語言標準是動手時的正向規範，稽核時對應的徵狀在該 Skill 的目錄裡。
+**Division of labor**: This rule defines **when** the writing audit must run. Symptom definitions, severity tiers, the profile tolerance matrix, and editor preservation constraints are defined exclusively in `deliverable-writing-audit`.
 
 ---
 
 ## Gotchas
 
-以下來自實際發生的失誤，不是從規則推導出來的。
+From real failures, not derived rules.
 
-### 給 Agent 讀的文件不是你的工作筆記
+### A File Loaded by an Agent Is Not Your Personal Scratchpad
 
-**什麼情況會踩到**：整理一份供 Agent 讀取的文件時，過程中的判斷、遇到的例外、當初為什麼這樣決定，順手記進去。這些內容確實有資訊量，看起來也像是負責任的紀錄。
+**When it happens**: While drafting a file intended for an agent to load at runtime, you include the intermediate trade-offs you weighed, exceptions you hit during debugging, or historical notes on how the rule evolved.
 
-**為什麼當下不會察覺**：撰寫者剛經歷過那段推理，那些脈絡在他腦中是主線，不是雜訊。要等另一個讀者在沒有脈絡的情況下讀它，才會發現整段找不到「所以現在該怎麼做」。這類文件的讀者是照著它執行的 agent，每一句都會被當成有目的的指示來讀，作者留給自己的紀錄也不例外。
+**Why it goes unnoticed**: Because you just walked through that reasoning, the backstory feels like the central thread rather than noise. Only when a fresh agent loads the file without conversational context does it become clear that the directive is buried under historical commentary—and an executing agent treats every sentence in its prompt as an active instruction.
 
-**判準**：寫下的每一句都要能回答「讀者讀完該做什麼」。回答不出來就刪。要保留來龍去脈，建立工項或寫進決策紀錄，不要放進 Agent 會載入的文件。
+**Criterion**: Every sentence in an agent-loaded file must answer **"what should the reader do right now?"** Delete any sentence that cannot answer that question, and move historical rationale into a work item or `decisions.md`.
 
-### 括號補述是脈絡沒地方放時的出口
+### Parenthetical Glosses Are Where Unplaced Context Leaks Out
 
-**什麼情況會踩到**：一句話寫完，覺得讀者可能不懂為什麼，於是加個括號解釋。或是某個名詞可能有歧義，加個括號界定。
+**When it happens**: After writing a rule sentence, you worry the reader might not understand the rationale or edge case, so you tack on a parenthetical remark `(because previously...)` or `(note that...)`.
 
-**為什麼當下不會察覺**：括號裡的內容單獨看都是有用的。它的代價不在單一處，而在密度——整份文件的主幹被補述切碎，讀者要一邊讀一邊決定哪些是正文。實際發生時，括號裡裝的多半是來龍去脈，也就是讀者照著做的時候用不到的那一層。
+**Why it goes unnoticed**: Each parenthetical remark looks helpful in isolation. The damage accumulates through density: the main clauses fracture into two parallel tracks, forcing the reader to constantly filter primary rules from side commentary.
 
-**判準**：括號只用於中英對照與符號強調。需要解釋就寫成正文，需要界定就換一個不會歧義的詞。附註成組出現時獨立條列在下方，不要嵌進主體敘述。
+**Criterion**: Reserve parentheses strictly for acronym introductions and symbolic notation. If a point matters enough to state, make it a standalone sentence or a dedicated table column; otherwise delete it.
 
-### 交付前的檢查涵蓋 commit 與 PR
+### Pre-Delivery Auditing Covers Commit Messages and PR Descriptions
 
-**什麼情況會踩到**：文件內容仔細檢查過，但 commit message 與 PR 內容視為附帶產物，直接生成。
+**When it happens**: You carefully audit the repository's Markdown files, then hastily generate the commit message or PR description at the very end of the task.
 
-**為什麼當下不會察覺**：那兩者不在「文件」的心理分類裡，而且它們通常在工作結束、注意力已經轉移時才寫。機敏資訊與 AI 署名的洩漏多半發生在這裡。
+**Why it goes unnoticed**: Commit messages and PR descriptions often sit outside the author's mental category of "documentation," and are written when attention has already shifted to wrapping up. Most accidental leaks of internal hostnames and AI attribution signatures happen right here.
 
-**判準**：commit message 與 PR 內容適用同一套交付檢查。寫完先掃一次有沒有機敏值、內部識別碼與 AI 署名，再送出。
+**Criterion**: Apply the exact same pre-delivery audit gate (`pr-commit` profile) to commit messages and PR descriptions—scanning for credentials, internal identifiers, and AI attribution signatures before submitting.

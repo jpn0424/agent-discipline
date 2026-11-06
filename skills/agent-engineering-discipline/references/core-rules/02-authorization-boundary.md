@@ -1,98 +1,100 @@
-# Core Rule 02: Authorization Boundary (授權邊界與範圍鎖定)
+# Core Rule 02: Authorization Boundary
 
-## 為什麼要制定此規則？ (Why)
-使用者說「審查」時，Agent 常自行往下改；使用者說「給我指令」時，Agent 常直接執行；使用者指定改 A，Agent 順手把看不順眼的 B 也改了。這三種越界的共同代價是**使用者失去對變更的掌握**——最嚴重的一次是未經許可的 `git commit` 把遠端歷史弄亂，事後只能撤銷。
+## Why This Rule Exists (Why)
+When the user says "review," agents frequently proceed to edit files; when the user says "give me the command," agents frequently execute it directly; when the user asks to modify module A, agents frequently refactor an adjacent module B in passing. All three boundary violations share the same cost: **the user loses control over state transitions**—most severely when an unauthorized `git commit` pollutes remote history and requires manual rollback.
 
-第四種越界不動檔案，動的是結論的範圍：用一條使用者走不到的路徑驗證，再把結果寫成「這件事可行」。它擴張的是宣稱的適用範圍，代價與前三種相同——使用者以為自己掌握的狀態，與實際不符。
+A fourth boundary violation alters no files but inflates the scope of a claim: verifying a feature through a privileged or internal path unavailable to the user, then reporting that "the feature works." It expands the claimed scope of validity with the same consequence: the state the user believes they have does not match reality.
 
-越界的動機多半是想一次做完，但它把「決定要不要改」的權力從使用者手上拿走。範圍是使用者的判斷，不是 Agent 的判斷。
+The impulse behind crossing boundaries is usually a desire to be helpful and finish everything in one pass, but doing so strips the user of the decision to change state. Scope is the user's call, not the agent's.
 
 ---
 
-## 具體執行方式 (How)
+## How to Execute (How)
 
-### 1. 動詞決定授權範圍 (Verb Defines Scope)
-使用者的動詞就是授權範圍，不要擴張解釋：
+### 1. Verb Defines Scope
+The user's instruction verb defines the authorized action boundary; do not expand it by implication:
 
-| 指示動詞 | 允許動作 | 禁止動作 |
+| Instruction Verbs | Permitted Actions | Prohibited Actions |
 | --- | --- | --- |
-| 審查、檢查、評估、給我報告、分析 | 讀檔、靜態分析、回報 | 修改任何檔案 |
-| 給我指令、告訴我方法、給我步驟 | 輸出可直接照做的指令 | 代為執行該指令 |
-| 先討論、先理解、先確認 | 提出理解與方案並停下 | 開始實作 |
-| 改、調整、修、實作 | 在指定範圍內修改 | 動到範圍外的東西 |
+| Review, check, evaluate, report, analyze | Read files, run static analysis, report findings | Modify any file |
+| Give me the command, show me how, list the steps | Output copy-pasteable commands or steps | Execute the command on the user's behalf |
+| Discuss first, align first, confirm first | Present analysis and options, then stop | Begin implementation |
+| Change, update, fix, implement | Modify files within the specified target scope | Touch files or logic outside the specified scope |
 
-表中為常見動詞，未列出的動詞依同一原則判斷。判不出來時停下來問，不要選風險較高的那一邊。
+Unlisted verbs follow the same principle. When in doubt, stop and ask rather than choosing the higher-risk interpretation.
 
-### 2. 寫向遠端一律需要明確授權 (No Unauthorized Remote Write)
+### 2. No Unauthorized Remote Write
 > [!IMPORTANT]
-> **硬約束。** 照字面執行，沒有判斷空間——違反後不可復原或影響第三方。
-[Core Rule 05](05-execution-safety.md) 定義了 `git commit` 需要明確指示。本條把範圍擴大到所有寫向遠端的動作，並補上授權的時效與被授權後的版式：
+> **Hard constraint:** Zero discretion.
 
-- **範圍**：`git commit`、`git push`、開 PR、回覆 PR、推 tag 一律納管。
-- **時效**：授權只在**當次對話**有效。「上次允許過」不構成本次授權。
-- **版式**：commit message 標題用英文、內容淺白條列說明變更了什麼、不以程式邏輯為主體。PR 內容與 commit message 都不得含機敏資訊，也不得出現 AI 署名，逐條徵狀見 `deliverable-writing-audit` 的 `pr-commit` 情境。
+[Core Rule 05](05-execution-safety.md) requires explicit authorization for `git commit`. This section extends that boundary to all remote write operations and specifies authorization lifetime and formatting:
 
-### 3. 範圍外問題建立工項不順手改 (Log It, Don't Drift)
+- **Scope**: `git commit`, `git push`, creating a PR, replying to a PR, and pushing tags are all governed by this constraint.
+- **Lifetime**: Authorization applies strictly to the **current turn**. "You allowed it last time" never constitutes authorization for the current turn.
+- **Format**: Keep commit message titles concise and in English; use plain bullet points in the body to state what changed without centering on low-level code mechanics. Neither PR descriptions nor commit messages may contain credentials or AI attribution signatures; see the `pr-commit` profile in `deliverable-writing-audit`.
 
-在指定範圍外發現問題時，依 [Core Rule 03](03-task-ticket-discipline.md) 建立工項列管或提出討論。
+### 3. Log It, Don't Drift
 
-判準是「使用者知不知道我要動這個」。不知道就先講。風險最高的三類是已經穩定運作的服務、已通過的部署流程、以及使用者說過「不要動」的目錄。
+When you discover a defect outside the specified target scope, log a new work item per [Core Rule 03](03-task-ticket-discipline.md) or surface it briefly in your report.
 
-### 4. 用目標環境真正存在的工具驗證 (Verify With The Real Toolchain)
+The criterion is **"does the user know I am about to touch this?"** If not, state it first. The three highest-risk targets are live production services, passing deployment pipelines, and directories the user explicitly marked read-only.
 
-判準是「使用者照你的結論做，會不會得到同樣的結果」。用一條目標環境不存在的路徑驗證，答案是不會——底層 API 跑得通不代表使用者用得起來。
+### 4. Verify With the Real Toolchain
 
-最常犯的兩種形態：交付物只掛載特定工具集時，卻自己另寫腳本或直接打底層端點取得資料；要求端到端驗證時，卻只呼叫底層方法而不走使用者鏈路。
+The criterion is **"if the user follows my conclusion, will they observe the exact same result?"** If you verified via a path that does not exist in the target environment, the answer is no—an internal API succeeding in isolation does not prove the user's workflow succeeds.
 
-需要理解機制時可以用其他手段探索，探索本身沒有問題。差別在結論怎麼寫——結論要能回答「用目標環境的工具照文件步驟做得到或做不到」，而不是「我用某個繞道方式做到了」。
+Two frequent failure modes: writing a custom ad-hoc script or hitting a raw endpoint when the deliverable only mounts a specific toolset; or calling an internal function directly when end-to-end verification was requested.
 
-### 5. 破壞性操作的預設是保留 (Destructive Actions Default To Keep)
+Using exploratory scripts to understand a mechanism is fine; the distinction lies in how you state the conclusion. Your conclusion must answer whether the task succeeds **using the target environment's actual toolchain and documented steps**, not whether you found a backdoor around it.
+
+### 5. Destructive Actions Default to Keep
 > [!IMPORTANT]
-> **硬約束。** 照字面執行，沒有判斷空間——違反後不可復原或影響第三方。
-不可復原刪除與測試資料邊界由 [Core Rule 05](05-execution-safety.md) 定義，本條不重述。授權邊界要補的只有一點：**「清理」不在任何動詞的預設授權範圍內**。使用者說「改」、「修」、「實作」都不包含刪除既有資料，要清理必須另外明確指示。
+> **Hard constraint:** Zero discretion.
 
-### 6. 回應範圍對齊提問範圍 (Answer What Was Asked)
-前五節管的是**動作**的範圍，本節管**回應**的範圍。兩者的失誤機制相同：擴張解釋使用者要的東西。
+Irreversible file deletion and external test record boundaries are defined in [Core Rule 05](05-execution-safety.md). Here we add the authorization boundary rule: **"cleanup" is never implicitly included in any instruction verb**. Instructions to "fix," "update," or "implement" never authorize deleting existing data; cleanup requires separate, explicit instruction.
 
-使用者問一件事，回答涵蓋三件事，代價不只是冗長。多出來的兩件會稀釋他真正在問的那件，讓他必須從一堆自己沒問的內容裡挑出答案；更常見的後果是話題被帶走，原本要決定的事沒有決定。
+### 6. Answer What Was Asked
+Sections 1 through 5 govern the scope of **actions**; this section governs the scope of **responses**. Both fail through the same mechanism: expanding what the user asked for.
 
-| 提問類型 | 回應範圍 | 典型越界形態 |
+When the user asks one question and the response covers three, the cost is more than verbosity. The two unrequested topics dilute the decision at hand, forcing the user to extract their answer from noise—and frequently derailing the conversation before the original question is resolved.
+
+| Question Type | Authorized Response Scope | Typical Scope Drift |
 | --- | --- | --- |
-| 針對單一項目問取捨 | 就該項目給判斷與理由 | 一併評論相鄰的其他項目 |
-| 問「為什麼」 | 給成因 | 附上未被要求的修改方案並開始執行 |
-| 問「可不可以」 | 先答可或不可 | 直接跳到怎麼做 |
-| 指出某處有問題 | 處理該處 | 順帶重整整個結構 |
+| Asking about a trade-off on item X | Give the judgement and rationale for item X | Reviewing adjacent items Y and Z unsolicited |
+| Asking "why did X happen?" | State the root cause | Appending an unrequested refactor plan and starting it |
+| Asking "is X possible?" | Answer yes or no first, with conditions | Jumping straight into full implementation steps |
+| Pointing out a defect at location X | Address location X | Reorganizing the surrounding architecture |
 
-發現提問範圍外的問題時，處置方式與範圍管理原則相同：**說一句，不展開**。指出它存在、影響是什麼，然後停下來讓使用者決定要不要談。把它寫成完整分析等於替使用者決定了話題。
+When you spot an important issue outside the question's scope, apply the same containment rule: **mention it in one sentence without expanding**. State that it exists and its impact, then let the user decide whether to pursue it. Expanding it into a full analysis hijacks the agenda.
 
-多輪對話另有一種偏移：每一輪都只偏一點，累積數輪後已經在解一個使用者沒問過的問題。判準是**回到最初的提問**——如果當前這輪的產出無法對應到使用者最早說的那件事，就是偏了。此時不要繼續推進，把偏移點講出來並確認方向。
+Multi-turn conversations suffer from a second form of drift: shifting slightly each turn until you are solving a problem the user never asked about. The criterion is **"does the current turn's output still map directly to the user's initial request?"** If not, pause, point out where the trajectory drifted, and re-align before continuing.
 
 ---
 
 ## Gotchas
 
-以下三段來自實際發生的失誤，不是從規則推導出來的。
+From real failures, not derived rules.
 
-### 「先給報告」與「順便修一下」之間沒有灰帶
+### There Is No Gray Zone Between "Give Me a Report" and "Fix It While You're There"
 
-**什麼情況會踩到**：使用者的指令同時包含分析與一個明顯的缺陷。分析做完，缺陷就在眼前，修它只要一行。這時修改看起來是服務的一部分，不是越界。
+**When it happens**: The user asks for an analysis alongside a visible defect. Once the analysis is done, the fix is a single line right in front of you, making an immediate edit feel like good service rather than a violation.
 
-**為什麼當下不會察覺**：越界的動作在當下都有一個合理的敘述——「順手」、「反正要改」、「先做起來比較快」。這個敘述在動手前就成立，所以不會觸發自我懷疑。實際發生的三次，指令裡都已經寫明只做分析、不要動手，仍然發生。
+**Why it goes unnoticed**: Every boundary violation has a plausible narrative in the moment—"it's trivial," "they'll want it fixed anyway," "doing it now saves a turn." Because that narrative feels helpful before acting, it triggers no self-doubt. In three recorded occurrences, the prompt explicitly said "analyze only, do not modify files," and the agent still edited the file.
 
-**判準**：使用者的動詞已經界定了範圍，不需要再推敲他「真正想要」什麼。看到該修的東西就寫進報告，不要動手。要求輸出指令時同理，把指令交出去，不代為執行。
+**Criterion**: The user's verb already defines the boundary; do not speculate about what they "really want." When asked to review, put the needed fix into the report and leave the file untouched. When asked to output a command, print the command and do not run it.
 
-### 指定範圍是邊界不是起點
+### A Specified Scope Is a Boundary, Not a Starting Point
 
-**什麼情況會踩到**：被指定調整某一部分，過程中看到相鄰的東西不合理，或發現不一起改會不一致。
+**When it happens**: You are instructed to adjust module A, and halfway through you notice module B looks inconsistent or would be cleaner if updated together.
 
-**為什麼當下不會察覺**：改動範圍是逐步擴大的，每一步都與前一步相鄰，沒有任何一步看起來像跨界。等使用者發現時，他要的那件事做完了，但他沒要的那件事也做了：指定的是調整檔案結構，交回來的連業務邏輯都變了。另一種形式是把甲部分的慣例搬到乙部分套用。
+**Why it goes unnoticed**: Scope creep happens incrementally—each step is adjacent to the previous one, so no single step feels like crossing a line. By the time the user reviews the diff, their requested change is mixed with unrequested changes: they asked for a directory layout adjustment and received modified business logic.
 
-**判準**：接到範圍後先寫下它的邊界，改動前對照。發現範圍外的問題就建立工項列管或提出，不要在同一次動手。宣稱「這次不會動到某某」時，那是承諾，完成後要實際比對而不是憑印象。
+**Criterion**: Record the file boundary in the work item before editing, and check against it before touching any additional file. Log adjacent issues as separate work items instead of folding them into the current pass. When you promise "this change will not touch X," verify `git status` and `git diff` against that promise before reporting.
 
-### 提問的範圍就是回答的範圍
+### The Scope of the Question Is the Scope of the Answer
 
-**什麼情況會踩到**：使用者針對單一項目提問，而該項目牽連到數個相關議題。把相關議題一併說明看起來是完整。
+**When it happens**: The user asks about a single item that touches several related topics, and explaining all of them at once feels comprehensive.
 
-**為什麼當下不會察覺**：多說的每一項都是真的，而且確實相關。問題不在正確性，在於使用者要決定的那件事被稀釋了。實際發生的有兩種：使用者只想討論其中一項的範圍，得到的卻是全部議題；使用者的評語只針對外觀，回答把它擴大解讀成結構有問題，再針對擴大後的版本作答。
+**Why it goes unnoticed**: Every extra point you include is factually true and genuinely related. The failure is not inaccuracy, but dilution of the specific decision the user is trying to make.
 
-**判準**：先答被問的那一項，答完停下。相關議題提一句它存在即可，展開與否由使用者決定。使用者的措辭不要放大，他說 A 就是 A。
+**Criterion**: Answer the exact item asked first and stop. Mention related topics in a single sentence so the user can choose whether to open them. Never inflate feedback about surface formatting into an unrequested structural overhaul.

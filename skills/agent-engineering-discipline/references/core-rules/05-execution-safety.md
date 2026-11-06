@@ -1,28 +1,31 @@
-# Core Rule 05: Execution Safety & Resource Hygiene (Git 安全與資源清理)
+# Core Rule 05: Execution Safety & Resource Hygiene
 
-## 為什麼要制定此規則？ (Why)
-未經確認的自動 Commit 會污染 Git Commit History；而使用 `rm -rf` 刪除測試暫存檔則無法復原，容易誤刪重要檔案。
-外部系統裡的記錄還多一層代價：那些資料不只本次測試在看，而且多數外部系統沒有垃圾桶，抹除之後連使用者自己也還原不了。
+## Why This Rule Exists (Why)
+Unconfirmed automatic commits pollute Git history, while running `rm -rf` on temporary test files permanently destroys data with zero recovery path if a path variable expands unexpectedly.
+Records created in external systems carry an additional cost: those systems are shared beyond the current test session and rarely have a recycle bin—once wiped, neither the agent nor the user can restore them.
 
 ---
 
-## 具體執行方式 (How)
+## How to Execute (How)
 
-### 1. Git Commit 紀律 (No Unauthorized Commit)
+### 1. Git Commit Discipline (No Unauthorized Commit)
 > [!IMPORTANT]
-> **硬約束。** 照字面執行，沒有判斷空間——違反後不可復原或影響第三方。
-- **未經指示不得 Commit**：`git commit` 只在使用者當次明確發出指令時執行，例如「請幫我 commit」。沒有收到這道指令就不執行。
-- **Commit 前衛生檢查**：執行 commit 前必須核對 `git status`，確保沒有誤納暫存檔、密碼或 `.DS_Store`。
+> **Hard constraint:** Zero discretion.
 
-### 2. 測試檔案可復原清理 (`trash` CLI)
-> [!IMPORTANT]
-> **硬約束。** 照字面執行，沒有判斷空間——違反後不可復原或影響第三方。
-- **不得使用 `rm -rf`**：清理測試或暫存檔案時不得使用，該指令不可復原。
-- **使用 Trash 移至垃圾桶**：在 macOS 環境下，必須使用 `/usr/bin/trash <path>` 將檔案移至垃圾桶，確保隨時可手動復原；其他平台若未配置可復原刪除工具，應將檔案移至暫存隔離目錄或明確請求使用者指示，不得執行不可復原的直接永久刪除。
+- **No Commit Without Explicit Instruction**: Execute `git commit` only when the user explicitly instructs you to commit in the current turn, such as saying "please commit these changes." Without that explicit instruction, leave changes staged or in the working tree.
+- **Pre-Commit Hygiene Check**: Before running `git commit`, inspect `git status` and `git diff` to verify that no temporary scratch files, secrets, or `.DS_Store` files are staged.
 
-### 3. 測試資料與外部系統記錄邊界
+### 2. Recoverable File Deletion (`trash` CLI)
 > [!IMPORTANT]
-> **硬約束。** 照字面執行，沒有判斷空間——違反後不可復原或影響第三方。
-- 測試過程中產生的資料與外部系統記錄**預設全部保留**供查驗，除非使用者明確指示清理。
-- 若奉命清理，先查詢確認當前狀態，且僅能使用該系統提供的**可逆狀態轉換**，例如作廢、撤銷、停用；不得直接修改資料庫抹除紀錄。
-- 只清理本次測試自己產生的記錄，不得擴及他人或既有資料。
+> **Hard constraint:** Zero discretion.
+
+- **Never Use `rm -rf`**: Never run `rm -rf` when cleaning up test artifacts or temporary files; the operation is irreversible.
+- **Move to Trash**: On macOS, always run `/usr/bin/trash <path>` so deleted files can be restored from Trash. On platforms without a system trash CLI, move files to an isolated temporary staging directory or ask the user for instructions—never execute permanent unrecoverable deletion.
+
+### 3. Test Data and External System Record Boundaries
+> [!IMPORTANT]
+> **Hard constraint:** Zero discretion.
+
+- **Default to Retain**: Retain all data and external system records created during testing for user inspection unless the user explicitly instructs you to clean them up.
+- **Reversible State Transitions Only**: When instructed to clean up external records, query their current state first and use only **reversible state transitions** provided by that system (such as voiding, cancelling, or deactivating)—never mutate the database directly to erase rows.
+- **Self-Created Scope Only**: Clean up only the specific records created during the current test pass; never touch pre-existing records or data created by others.

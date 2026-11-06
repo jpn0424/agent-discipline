@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-"""交付文件書寫徵狀偵測器。
+"""Deliverable writing symptom detector.
 
-只依賴 Python 3 標準庫。偵測 references/pattern-catalog.md 中標為「可機械偵測」
-的徵狀；需要讀懂語意的徵狀不在此腳本範圍，見 references/category-map.md。
+Depends only on the Python 3 standard library. Detects symptoms marked as
+mechanically detectable in references/pattern-catalog.md; symptoms requiring
+semantic comprehension are out of scope for this script (see
+references/category-map.md).
 
-用法：
+Usage:
     python3 detect.py <path...> [--profile NAME] [--json] [--terms FILE]
 
-結束碼：0 乾淨、1 有命中、2 執行錯誤。
+Exit codes: 0 clean, 1 hits found, 2 execution error.
 """
 
 from __future__ import annotations
@@ -19,29 +21,29 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-# ---------------------------------------------------------------- 徵狀定義
+# ---------------------------------------------------------------- Symptom Definitions
 
-# (type, 目錄編號, 嚴重度, 標籤)
+# (type, catalog_id, severity, label)
 META = {
-    "secret-leak": ("A1", "P0", "機敏值外洩"),
-    "ai-signature": ("A2", "P0", "AI 署名"),
-    "unverified-status": ("A4", "P0", "「未實測」殘留"),
-    "abs-path": ("A5", "P0", "本機絕對路徑"),
-    "change-narration": ("B1", "P1", "流水帳與比較新舊"),
-    "paren-gloss": ("B2", "P1", "括號補述"),
-    "note-to-self": ("B3", "P1", "個人註記殘留"),
-    "unevidenced-limit": ("C1", "P1", "限制宣稱（需人工核對證據）"),
-    "retired-term": ("C3", "P1", "已退役術語復活"),
-    "duplicated-rule": ("C4", "P1", "規則重複散落"),
-    "dev-jargon-leak": ("C7", "P1", "開發者術語滲入交付物"),
-    "vague-filler": ("D1", "P2", "模糊量詞與填充詞密度"),
-    "emoji-density": ("D2", "P2", "emoji 密度"),
-    "label-period": ("D3", "P2", "條列標籤用句號"),
+    "secret-leak": ("A1", "P0", "Secret and credential leakage"),
+    "ai-signature": ("A2", "P0", "AI attribution signature"),
+    "unverified-status": ("A4", "P0", "Residual unverified status"),
+    "abs-path": ("A5", "P0", "Local absolute path"),
+    "change-narration": ("B1", "P1", "Change narration and before/after comparison"),
+    "paren-gloss": ("B2", "P1", "Parenthetical gloss"),
+    "note-to-self": ("B3", "P1", "Residual note-to-self"),
+    "unevidenced-limit": ("C1", "P1", "Capability limitation claim (verify evidence)"),
+    "retired-term": ("C3", "P1", "Revived retired terminology"),
+    "duplicated-rule": ("C4", "P1", "Scattered duplicate rules"),
+    "dev-jargon-leak": ("C7", "P1", "Developer jargon leaked into deliverables"),
+    "vague-filler": ("D1", "P2", "Vague quantifiers and filler words density"),
+    "emoji-density": ("D2", "P2", "Emoji density"),
+    "label-period": ("D3", "P2", "Period inside bold list label"),
 }
 
 SEVERITY_ORDER = {"P0": 0, "P1": 1, "P2": 2}
 
-# 情境寬容矩陣。未列出者一律 strict。
+# Profile tolerance matrix. Unlisted entries default to strict.
 PROFILES = {
     "harness": {
         "dev-jargon-leak": "skip",
@@ -99,11 +101,12 @@ RE_SECRET_ASSIGN = re.compile(
     r"\s*[=:]\s*(?!\s*$)(?!<)(?!\{)(?!\$)[^\s\"']{4,}",
     re.IGNORECASE,
 )
-# {0,40} 是指令動詞與 `.env` 之間允許的距離，足以容納旗標與相對路徑
-# （`grep -i SECRET ../config/.env`），又短到不會把同一行裡不相干的指令與 `.env` 誤配成一組。
+# {0,40} is the maximum character distance between the shell verb and `.env`,
+# wide enough for flags and relative paths (`grep -i SECRET ../config/.env`)
+# while narrow enough not to pair an unrelated command with a later `.env` mention.
 RE_SECRET_DUMP = re.compile(r"\b(?:cat|grep|echo|print|head|tail|less|more)\b[^\n]{0,40}\.env\b")
-# 白名單比對主機名的結尾，不比對子字串。否則白名單項目會連帶放行把它當前綴的
-# 主機，例如放行 shields.io 會一併放行 shields.io.attacker.net。
+# Allowlist matches the end of the hostname rather than any substring; otherwise
+# allowlisting shields.io would also allowlist shields.io.attacker.net.
 RE_INTERNAL_HOST = re.compile(
     r"https?://(?![^\s/]*"
     r"(?:localhost|127\.0\.0\.1|example\.[a-z]{2,}|github\.com|skills\.sh|shields\.io)"
@@ -114,6 +117,9 @@ RE_AI_SIGNATURE = re.compile(
     r"(?:provide[d]?\s+by\s+claude|generated\s+with\s+\[?claude|co-authored-by:\s*claude|🤖)",
     re.IGNORECASE,
 )
+# Attributive `unverified <noun>` (e.g. "unverified work", "unverified claim") is
+# normal rule prose; A4 targets standalone/predicate status markers ("untested",
+# "to be confirmed", "is/remains unverified", "| unverified |", "TBD").
 RE_UNVERIFIED = re.compile(
     r"未實測|未測試|待確認|待驗證|尚未驗證|推定支援|狀態未知"
     r"|\buntested\b|\bto be confirmed\b|\bto be verified\b|\byet to be (?:tested|verified)\b"
@@ -124,7 +130,8 @@ RE_UNVERIFIED = re.compile(
     re.IGNORECASE,
 )
 RE_ABS_PATH = re.compile(r"(?:/Users/[A-Za-z0-9._-]+|/home/[A-Za-z0-9._-]+|[A-Za-z]:\\\\?Users\\\\?[A-Za-z0-9._-]+)")
-# 「已退役術語」這類定語用法是分類標籤而非變更敘述，以 lookahead 排除。
+# Attributive uses such as "retired terminology" or "已退役術語" are category labels
+# rather than change narration, excluded via lookahead.
 RE_CHANGE_NARRATION = re.compile(
     r"原本[^\n]{0,12}(?:改為|改成)"
     r"|原本(?:是|走|用)[^\n]{0,30}(?:現在|後來|改)"
@@ -166,56 +173,51 @@ RE_EVIDENCE = re.compile(
     re.IGNORECASE,
 )
 RE_DEV_JARGON = re.compile(r"\.claude/|\.agents/|Harness|本機|本地開發|subagent|validator|AD-\d{3,}|HD-\d{3,}|TASK-\d{6,}")
-# 只抓粗體標籤形式。未加粗的開頭片段常是完整句子（「重新執行測試。若…」），
-# 而中文動詞偵測不可靠，無法用正則分出標籤與句子，因此收斂到誤判最低的強形式。
+# Matches only bold list labels ending in a period. Unbolded list openings are
+# frequently complete imperative sentences ("- Run the test suite. If it fails..."),
+# which cannot be separated from noun labels in regex without a POS parser.
 RE_LABEL_PERIOD = re.compile(r"^\s*[-*+]\s+\*\*([^*。：:\n]{1,30})[。.]\*\*\s*\S")
 RE_HEADING = re.compile(r"^\s{0,3}#{1,6}\s")
 RE_TABLE_ROW = re.compile(r"^\s*\|")
 RE_EMOJI = re.compile(
     "[\U0001F300-\U0001FAFF\U00002600-\U000027BF\U0001F000-\U0001F2FF\U0001F900-\U0001F9FF]"
 )
-# 表格狀態標記與清單標記屬結構化資訊，不計入 emoji 密度。
+# Structural status glyphs in tables and lists are excluded from emoji density.
 STATUS_GLYPHS = set("✅⚠️❌✔️❎⛔️🔴🟠🟡".replace("️", "")) | {"✅", "⚠", "❌", "✔", "🔴", "🟠", "🟡"}
 
-VAGUE_WORDS = ["相關", "之類", "等等", "適當", "盡量", "某種", "某些", "一些", "大概", "基本上", "原則上"]
+VAGUE_WORDS_ZH = ["相關", "之類", "等等", "適當", "盡量", "某種", "某些", "一些", "大概", "基本上", "原則上"]
 RE_VAGUE_EN = re.compile(
     r"\betc\.|\band so on\b|\bappropriately\b|\bas much as possible\b|\bsome kind of\b|\broughly\b|\bbasically\b|\bin principle\b",
     re.IGNORECASE,
 )
 
-# 密度門檻，單位為每千字元命中數。這兩條是 Tier 3 徵狀：被計數的字詞本身都是正常用字，
-# 只有密度明顯偏高才代表文件在用模糊詞或裝飾替代具體敘述。門檻因此刻意設在遠高於
-# 乾淨語料的位置，寧可漏標也不要讓正常文件被標。
-#
-# 校準基準是本 repo 現行的 24 個 Markdown 檔，以本腳本自身的計數方式實測：
-#   模糊詞：中位數 0.00／最高 2.65（`task-template.md`）
-#   emoji（已扣除 STATUS_GLYPHS）：中位數 0.00／最高 0.10
-# 兩個門檻都取在最高值之上，因此現行語料全數不觸發。改動門檻前先在目標語料重測，
-# 不要憑感覺調整——這兩個數字的意義是「相對於乾淨語料的倍數」，不是絕對品質線。
-EMOJI_PER_KCHAR = 1.0   # 現行語料最高值的約 10 倍
-VAGUE_PER_KCHAR = 4.0   # 現行語料最高值的約 1.5 倍
+# Density thresholds in hits per 1,000 characters. Tier 3 symptoms count words
+# that are normal in isolation and problematic only at high density. Thresholds
+# are calibrated above the maximum observed across the clean suite corpus so
+# normal specifications do not trigger false positives.
+EMOJI_PER_KCHAR = 1.0
+VAGUE_PER_KCHAR = 4.0
 
-# 括號內出現這些字代表是補敘述而非術語對照。
-# {2,80}：下限 2 排除空括號與單字元符號；上限 80 之外的括號內容已是完整段落，
-# 屬「該寫成正文」而不是「括號補述」，改由 C2 該結構化卻寫成流水句判讀。
+# Parentheses preceded by `]` are Markdown link targets `[label](url)` and are
+# excluded via negative lookbehind `(?<!\])`.
 RE_PAREN = re.compile(r"(?<!\])[（(]([^（()）]{2,100})[)）]")
-PAREN_GLOSS_HINT = re.compile(r"因為|所以|其實|亦即|也就是|原本|之前|曾經|已棄用|為了|避免|例如|注意|不是|舊的|導致|以免|意思是")
+PAREN_GLOSS_HINT_ZH = re.compile(r"因為|所以|其實|亦即|也就是|原本|之前|曾經|已棄用|為了|避免|例如|注意|不是|舊的|導致|以免|意思是")
 PAREN_GLOSS_HINT_EN = re.compile(
     r"\b(?:because|since|therefore|i\.e\.|that is|namely|originally|previously|formerly|deprecated|in order to|to avoid|for example|e\.g\.|note that|meaning that|used to|which we)\b",
     re.IGNORECASE,
 )
 
 
-# ---------------------------------------------------------------- 前處理
+# ---------------------------------------------------------------- Preprocessing
 
 RE_FENCE = re.compile(r"^\s*(?:```|~~~)")
 
 
 def mask_quoted(text: str, mask_code: bool = True) -> str:
-    """遮蔽引用內容，實作自我引用豁免。
+    """Mask quoted spans and inline code to implement the self-reference exemption.
 
-    `mask_code=False` 保留 inline code 內容：機敏值與 AI 署名常寫在反引號內，
-    那不是引用示例而是真的洩漏。
+    `mask_code=False` preserves inline code spans because leaked credentials,
+    AI signatures, and local absolute paths frequently appear inside backticks.
     """
     if mask_code:
         text = re.sub(r"`[^`\n]*`", lambda m: " " * len(m.group(0)), text)
@@ -229,7 +231,7 @@ def mask_quoted(text: str, mask_code: bool = True) -> str:
 
 
 def read_lines(path: Path) -> list[tuple[int, str, str, str]]:
-    """回傳 (行號, 原始行, 全遮蔽行, 僅遮蔽引用行)，並剔除 fenced code block。"""
+    """Return (lineno, raw, fully_masked, quote_only_masked), stripping fenced code blocks."""
     out: list[tuple[int, str, str, str]] = []
     in_fence = False
     for i, raw in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
@@ -243,11 +245,13 @@ def read_lines(path: Path) -> list[tuple[int, str, str, str]]:
 
 
 def guess_profile(path: Path) -> str:
-    """依路徑推斷交付情境。
+    """Infer delivery profile from file path.
 
-    刻意不把 `skills/` 一律判成 `agent-facing`：路徑看不出這個 Skill 的讀者是
-    業務 agent 還是開發者。談開發工作流的 Skill，`Harness`、`.claude/`、`本機`
-    正是它的主題而非雜訊。需要 `agent-facing` 的加嚴時以 `--profile` 明指。
+    Deliberately does not force `skills/` to `agent-facing`: file paths alone
+    cannot tell whether a Skill targets business agents or developers. For
+    engineering governance Skills, `Harness`, `.claude/`, and local paths are
+    the subject matter rather than noise. Pass `--profile agent-facing`
+    explicitly when auditing business-agent Skills.
     """
     p = "/" + str(path).replace("\\", "/").lstrip("./")
     name = path.name
@@ -258,7 +262,7 @@ def guess_profile(path: Path) -> str:
     return "harness"
 
 
-# ---------------------------------------------------------------- 偵測
+# ---------------------------------------------------------------- Detection
 
 class Hit:
     __slots__ = ("type", "line", "text", "note", "borderline")
@@ -278,8 +282,8 @@ def scan_file(path: Path, terms: list[str]) -> list[Hit]:
 
     for lineno, raw, masked, masked_keep_code in lines:
         for rx, type_, note, target in (
-            (RE_SECRET_ASSIGN, "secret-leak", "疑似寫死的憑證值", masked_keep_code),
-            (RE_SECRET_DUMP, "secret-leak", "把 .env 內容導出到輸出", masked),
+            (RE_SECRET_ASSIGN, "secret-leak", "Suspected hardcoded credential value", masked_keep_code),
+            (RE_SECRET_DUMP, "secret-leak", "Dumping .env contents to output", masked),
             (RE_AI_SIGNATURE, "ai-signature", "", masked),
             (RE_UNVERIFIED, "unverified-status", "", masked),
             (RE_NOTE_TO_SELF, "note-to-self", "", masked),
@@ -287,18 +291,16 @@ def scan_file(path: Path, terms: list[str]) -> list[Hit]:
             for m in rx.finditer(target):
                 hits.append(Hit(type_, lineno, raw[m.start():m.end()], note))
 
-        # A5 在 masked_keep_code 上比對：路徑包成 code span 一樣是洩漏，
-        # 遮蔽後整段漏判。已佔位符化的示例（`/Users/<使用者>/...`）不符合 RE_ABS_PATH
-        # 的字元集，天然豁免，因此不需要為格式示例另開放行條件。
-        # 命中不標 borderline：borderline 只在 extra 情境浮出，而本徵狀要在
-        # 預設情境就攔下，人工判讀由 note 承擔。
+        # A5 matches against masked_keep_code because paths inside backticks are
+        # still leaks. Angle-bracket placeholders (`/Users/<user>/...`) do not
+        # match RE_ABS_PATH's character class and are naturally exempt.
         for m in RE_ABS_PATH.finditer(masked_keep_code):
             quoted = not masked[m.start():m.end()].strip()
-            note = "位於引用或 code span 內，判讀是格式示例還是真實路徑" if quoted else ""
+            note = "Inside quote or code span; verify whether format example or live path" if quoted else ""
             hits.append(Hit("abs-path", lineno, raw[m.start():m.end()], note))
 
         for m in RE_INTERNAL_HOST.finditer(masked_keep_code):
-            hits.append(Hit("secret-leak", lineno, m.group(0), "內部主機名，改用佔位符", borderline=True))
+            hits.append(Hit("secret-leak", lineno, m.group(0), "Internal hostname; replace with placeholder", borderline=True))
 
         for m in RE_CHANGE_NARRATION.finditer(masked):
             hits.append(Hit("change-narration", lineno, raw[m.start():m.end()]))
@@ -306,7 +308,7 @@ def scan_file(path: Path, terms: list[str]) -> list[Hit]:
         for m in RE_PAREN.finditer(masked):
             inner = m.group(1)
             if re.search(r"[一-鿿]", inner):
-                borderline = not PAREN_GLOSS_HINT.search(inner)
+                borderline = not PAREN_GLOSS_HINT_ZH.search(inner)
                 if borderline and len(inner) <= 8:
                     continue
                 hits.append(Hit("paren-gloss", lineno, raw[m.start():m.end()], borderline=borderline))
@@ -321,11 +323,11 @@ def scan_file(path: Path, terms: list[str]) -> list[Hit]:
             and not re.search(r"\b(?:if|when|whenever|unless)\b[^\n]{0,35}\bcannot\b", masked, re.IGNORECASE)
             and not RE_EVIDENCE.search(raw)
         ):
-            hits.append(Hit("unevidenced-limit", lineno, raw, "同一行找不到證據標記，需人工核對"))
+            hits.append(Hit("unevidenced-limit", lineno, raw, "No evidence marker on same line; verify manually"))
 
         for t in terms:
             if t and t in masked:
-                hits.append(Hit("retired-term", lineno, t, "已退役術語"))
+                hits.append(Hit("retired-term", lineno, t, "Retired term"))
 
         if not RE_TABLE_ROW.match(raw):
             for m in RE_DEV_JARGON.finditer(masked):
@@ -333,9 +335,9 @@ def scan_file(path: Path, terms: list[str]) -> list[Hit]:
 
         m = RE_LABEL_PERIOD.match(raw)
         if m:
-            hits.append(Hit("label-period", lineno, m.group(0), "標籤結尾的句號應改冒號"))
+            hits.append(Hit("label-period", lineno, m.group(0), "Replace period at end of bold label with colon"))
 
-    # 密度類：整檔一次判定
+    # Density checks: evaluated once per file
     emoji_hits = [
         (lineno, ch)
         for lineno, raw, _, _ in lines
@@ -349,11 +351,11 @@ def scan_file(path: Path, terms: list[str]) -> list[Hit]:
             hits.append(
                 Hit("emoji-density", emoji_hits[0][0],
                     "".join(c for _, c in emoji_hits[:12]),
-                    f"每千字 {per_kchar:.1f} 個，共 {len(emoji_hits)} 個")
+                    f"{per_kchar:.1f} per 1k chars ({len(emoji_hits)} total)")
             )
 
     vague_total = sum(
-        sum(masked.count(w) for w in VAGUE_WORDS) + len(RE_VAGUE_EN.findall(masked))
+        sum(masked.count(w) for w in VAGUE_WORDS_ZH) + len(RE_VAGUE_EN.findall(masked))
         for _, _, masked, _ in lines
     )
     if vague_total:
@@ -363,25 +365,24 @@ def scan_file(path: Path, terms: list[str]) -> list[Hit]:
                 (
                     lineno
                     for lineno, _, masked, _ in lines
-                    if any(w in masked for w in VAGUE_WORDS) or RE_VAGUE_EN.search(masked)
+                    if any(w in masked for w in VAGUE_WORDS_ZH) or RE_VAGUE_EN.search(masked)
                 ),
                 1,
             )
-            hits.append(Hit("vague-filler", first, f"共 {vague_total} 處",
-                            f"每千字 {per_kchar:.1f} 處，超過 {VAGUE_PER_KCHAR} 門檻"))
+            hits.append(Hit("vague-filler", first, f"{vague_total} occurrences",
+                            f"{per_kchar:.1f} per 1k chars (threshold {VAGUE_PER_KCHAR})"))
 
     return hits
 
 
 def scan_duplicates(files: list[Path], min_len: int = 40) -> dict[Path, list[Hit]]:
-    """跨檔比對完全重複的實質內容行。
+    """Detect exact duplicate substantive lines across files as an SSOT violation signal.
 
-    min_len 是參與比對的最短行長，單位為字元。低於此長度的重複幾乎都是結構標記而非規則
-    重複：本 repo 現行語料的 14 處跨檔重複行全部短於 40 字元，且全為 `---`、程式碼圍籬、
-    表格分隔列、`> [!NOTE]`、frontmatter 的 `allowed-tools` 項目這類必然相同的版式。
-    設在 40 讓這些結構標記全數落在門檻之下，同時語意完整的中文規則句普遍超過 40 字元。
+    min_len is the minimum character length after stripping whitespace and leading
+    list/heading markers. Lines shorter than 40 normalized characters are structural
+    markers (`---`, fences, table dividers, `> [!NOTE]`, frontmatter keys) rather
+    than duplicated normative rules.
     """
-    """找出跨檔完全重複的實質內容行，作為 SSOT 違反的線索。"""
     index: dict[str, list[tuple[Path, int, str]]] = defaultdict(list)
     for path in files:
         for lineno, raw, _, _ in read_lines(path):
@@ -398,11 +399,11 @@ def scan_duplicates(files: list[Path], min_len: int = 40) -> dict[Path, list[Hit
             continue
         where = ", ".join(sorted(f"{p.name}:{ln}" for p, ln, _ in occurrences))
         for path, lineno, raw in occurrences:
-            out[path].append(Hit("duplicated-rule", lineno, raw, f"同內容也出現於 {where}"))
+            out[path].append(Hit("duplicated-rule", lineno, raw, f"Also appears at {where}"))
     return out
 
 
-# ---------------------------------------------------------------- 輸出
+# ---------------------------------------------------------------- Output
 
 def apply_strictness(hits: list[Hit], profile: str) -> list[Hit]:
     rules = PROFILES.get(profile, {})
@@ -439,20 +440,20 @@ def collect_files(paths: list[str]) -> list[Path]:
 
 
 def main(argv: list[str]) -> int:
-    ap = argparse.ArgumentParser(description="交付文件書寫徵狀偵測器")
-    ap.add_argument("paths", nargs="+", help="檔案或目錄（目錄則遞迴掃 *.md）")
-    ap.add_argument("--profile", choices=sorted(PROFILES), help="交付情境，省略則逐檔自動判定")
-    ap.add_argument("--terms", help="專案已退役術語清單，一行一個，`#` 開頭為註解")
-    ap.add_argument("--json", action="store_true", help="輸出結構化結果")
+    ap = argparse.ArgumentParser(description="Deliverable writing symptom detector")
+    ap.add_argument("paths", nargs="+", help="Files or directories (directories are scanned recursively for *.md)")
+    ap.add_argument("--profile", choices=sorted(PROFILES), help="Delivery profile; inferred per file when omitted")
+    ap.add_argument("--terms", help="File listing retired project terms, one per line (`#` for comments)")
+    ap.add_argument("--json", action="store_true", help="Emit structured JSON output")
     args = ap.parse_args(argv)
 
     try:
         files = collect_files(args.paths)
     except FileNotFoundError as exc:
-        print(f"找不到路徑：{exc}", file=sys.stderr)
+        print(f"Path not found: {exc}", file=sys.stderr)
         return 2
     if not files:
-        print("沒有可稽核的檔案", file=sys.stderr)
+        print("No auditable files found", file=sys.stderr)
         return 2
 
     terms: list[str] = []
@@ -464,7 +465,7 @@ def main(argv: list[str]) -> int:
                 if ln.strip() and not ln.startswith("#")
             ]
         except OSError as exc:
-            print(f"讀取術語清單失敗：{exc}", file=sys.stderr)
+            print(f"Failed to read terms file: {exc}", file=sys.stderr)
             return 2
 
     dup = scan_duplicates(files) if len(files) > 1 else {}
@@ -505,17 +506,17 @@ def main(argv: list[str]) -> int:
         print(f"\n{entry['file']}  [profile: {entry['profile']}]")
         for h in entry["hits"]:
             note = f"  — {h['note']}" if h["note"] else ""
-            mark = " [邊界]" if h["borderline"] else ""
+            mark = " [borderline]" if h["borderline"] else ""
             print(f"  {h['severity']}{mark} {h['catalog']} {h['label']}  :{h['line']}  {h['text']}{note}")
 
     borderline_total = sum(1 for r in report for h in r["hits"] if h["borderline"])
 
-    print(f"\n共 {total} 處命中，掃描 {len(files)} 個檔案。")
+    print(f"\nTotal {total} hit(s) across {len(files)} file(s).")
     if total:
-        print("命中不等於錯誤：請逐條對照 references/pattern-catalog.md 的「例外」小節後判讀。")
+        print("A hit is not necessarily an error: check the 'Exceptions' field in references/pattern-catalog.md before adjudicating.")
     if borderline_total:
-        print(f"其中 {borderline_total} 處標為 [邊界]：形式命中但正當用途常見，"
-              "只在加嚴情境浮出，嚴重度不代表確定是缺陷，一律人工判讀。")
+        print(f"{borderline_total} hit(s) tagged [borderline]: surface pattern matches with common legitimate uses; "
+              "surfaced only under Extra-strict profiles and require human/agent judgement.")
     return 1 if total else 0
 
 
