@@ -15,17 +15,17 @@ Eleven core rules form the single source of truth for cross-project engineering 
 
 | Rule | Governance Scope |
 | --- | --- |
-| [Core Rule 01](references/core-rules/01-judgement-responsibility.md) | Judgement Responsibility: Boundary between autonomous verification and asking the user |
-| [Core Rule 02](references/core-rules/02-authorization-boundary.md) | Authorization Boundary: Per-turn remote write gates, instruction verbs, and scope locking |
+| [Core Rule 01](references/core-rules/01-judgement-responsibility.md) | Judgement Responsibility: Boundary between autonomous verification, batch input sizing, and asking the user |
+| [Core Rule 02](references/core-rules/02-authorization-boundary.md) | Authorization Boundary: Per-turn remote write gates, instruction verbs, scope locking, and cross-workspace isolation |
 | [Core Rule 03](references/core-rules/03-task-ticket-discipline.md) | Work Item Discipline: Creation, status transitions, acceptance criteria, and screenshot records |
 | [Core Rule 04](references/core-rules/04-delegation-contract.md) | Delegation Contract: Input, acceptance, and constraint completeness when handing off tasks |
-| [Core Rule 05](references/core-rules/05-execution-safety.md) | Execution Safety: Boundaries on irreversible operations and external resource cleanup |
+| [Core Rule 05](references/core-rules/05-execution-safety.md) | Execution Safety: Boundaries on irreversible operations, external resource cleanup, and script directory hygiene |
 | [Core Rule 06](references/core-rules/06-implementation-restraint.md) | Implementation Restraint: Minimal sufficient implementation and compatibility maintenance |
 | [Core Rule 07](references/core-rules/07-protocol-tool-hygiene.md) | Protocol and Schema Hygiene: `stdout` stream isolation and zero-speculation schema lookup |
-| [Core Rule 08](references/core-rules/08-honesty-and-evidence.md) | Honesty and Evidence: Co-located evidence, capability status, and instrument calibration |
+| [Core Rule 08](references/core-rules/08-honesty-and-evidence.md) | Honesty and Evidence: Co-located evidence, numerical provenance, capability status, and instrument calibration |
 | [Core Rule 09](references/core-rules/09-deliverable-hygiene.md) | Deliverable Hygiene and ADR: Deliverable sanitization, decision records, and writing audit gate |
-| [Core Rule 10](references/core-rules/10-harness-doc-layout.md) | Harness Document Layout: Canonical `AGENTS.md` source of truth and tool entrypoint division |
-| [Core Rule 11](references/core-rules/11-skill-and-agent-spec.md) | Skill Specification and Two-Tier Governance: Skill authoring rules and verifier delegation |
+| [Core Rule 10](references/core-rules/10-harness-doc-layout.md) | Harness Document Layout: Canonical `AGENTS.md` source of truth, context budget, fast-path routing, and tool entrypoints |
+| [Core Rule 11](references/core-rules/11-skill-and-agent-spec.md) | Skill Specification and Two-Tier Governance: Skill authoring rules, sandboxed baseline evaluation, and verifier delegation |
 
 Rules in this specification carry two levels of enforcement strength:
 
@@ -58,7 +58,7 @@ When advancing a task, identify which action you are currently performing to foc
 | Action | Failure Mode | Applicable Rules |
 | --- | --- | --- |
 | Judge | Filling verifiable gaps with guesswork; modifying architecture or rules without first reading the project's `decisions.md` to check rejected alternatives; or pushing already-settled decisions back onto the user | [Core Rule 01](references/core-rules/01-judgement-responsibility.md), [Core Rule 08](references/core-rules/08-honesty-and-evidence.md), [Core Rule 09](references/core-rules/09-deliverable-hygiene.md) |
-| Authorize | Editing files when the verb is "review"; answering beyond the scope of what was asked | [Core Rule 02](references/core-rules/02-authorization-boundary.md) |
+| Authorize | Editing files when the verb is "review"; mutating an external repository from a side clause; answering beyond the scope of what was asked | [Core Rule 02](references/core-rules/02-authorization-boundary.md) |
 | Define | Modifying files before creating a work item; waiting until after seeing results to define acceptance criteria | [Core Rule 03](references/core-rules/03-task-ticket-discipline.md), [Core Rule 04](references/core-rules/04-delegation-contract.md) |
 | Execute | Building premature abstractions; unilaterally removing active compatibility layers; speculating schema definitions from memory | [Core Rule 06](references/core-rules/06-implementation-restraint.md), [Core Rule 07](references/core-rules/07-protocol-tool-hygiene.md) |
 | Collect Evidence | Trusting an uncalibrated verification script; verifying via a shortcut that bypasses the user's actual toolchain | [Core Rule 02](references/core-rules/02-authorization-boundary.md), [Core Rule 08](references/core-rules/08-honesty-and-evidence.md), [Core Rule 09](references/core-rules/09-deliverable-hygiene.md) |
@@ -92,4 +92,4 @@ python3 scripts/check_skill_spec.py <project-path>
 # Option: --json outputs structured JSON results
 ```
 
-Requires only the Python 3 standard library with no external dependencies. Exit code `0` indicates all checks passed, `1` indicates structural defects, and `2` indicates an execution error. Validates deterministic structural invariants: YAML frontmatter completeness, `name` formatting, absence of angle-bracket tags, absence of `README.md` or symbolic links inside a Skill directory, absence of frontmatter in subdirectory files, relative link resolution, and platform pointer integrity for every entrypoint defined in Core Rule 10 (each must only point to `AGENTS.md`, either as a short reference file or as a symlink to it).
+Requires only the Python 3 standard library with no external dependencies. Exit code `0` indicates all checks passed, `1` indicates structural defects, and `2` indicates an execution error. Validates deterministic structural invariants: YAML frontmatter completeness, `name` formatting, presence of exclusion boundaries and quoted user triggers in `description` without banned superlatives or platform-mechanics terms, absence of angle-bracket tags, absence of `README.md` or symbolic links inside a Skill directory, absence of frontmatter in subdirectory files, relative link resolution, reachability of every file under `references/`, `assets/`, and `scripts/` from `SKILL.md`, and platform pointer integrity for every entrypoint defined in Core Rule 10 (each must only point to `AGENTS.md`, either as a short reference file or as a symlink to it).

@@ -39,6 +39,7 @@ This rule does not mean "never ask." You must ask in the following situations; t
 - The user's stated goals conflict with each other such that satisfying one violates another.
 - The cost difference between options exceeds what you can absorb—such as major rework volume or external user impact.
 - You are missing a fact that cannot be inspected from the system; stop and report per Section 1.
+- A task involves a large batch of input files or records and the user has not explicitly requested one-to-one processing; first inspect whether the items are homogeneous or heterogeneous, synthesize a small representative subset while stating the grouping or sampling rationale, and ask whether item-by-item expansion is needed.
 
 Make all other judgements yourself, and state in your report **what you decided and which criterion you applied**. A stated decision can be overturned by the user; an unmade decision stalls progress.
 
@@ -68,3 +69,11 @@ From real failures, not derived rules.
 **Why it goes unnoticed**: Deferring to existing configuration feels cautious. Yet existing configuration only proves what was configured previously, not what is required now—treating it as a constraint lets the status quo override the user's explicit instruction. Configure for the user's stated outcome first, then audit and update the existing state to match.
 
 **Criterion**: Once the user states a goal, align the current state to the goal rather than compromising the goal to fit the current state. If the current state exposes an unconsidered trade-off, surface the trade-off without halting execution.
+
+### Blind One-to-One Expansion and Silent Truncation Both Usurp the User's Call
+
+**When it happens**: A task points to dozens of source files or archival records without specifying output granularity. One response explodes into matching dozens of near-identical files; another response imposes an arbitrary small cap without explaining what was skipped.
+
+**Why it goes unnoticed**: Generating a file per input feels thorough and faithful to the source set, while imposing a hard cutoff feels concise and disciplined. Both choices decide output granularity and information loss on the user's behalf without inspecting whether the batch is repetitive or diverse.
+
+**Criterion**: Inspect whether the inputs cluster into repeating themes before generating outputs. Summarize or synthesize a small representative batch, state the grouping or sampling rationale explicitly, and ask whether the user wants full item-by-item expansion.

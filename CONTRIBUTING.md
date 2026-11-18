@@ -63,7 +63,7 @@ python3 skills/deliverable-writing-audit/scripts/detect.py .
 ```
 
 Verify that both pass:
-- **Structural check (`check_skill_spec.py`)**: Valid YAML Frontmatter, `description` stating both trigger conditions and negative boundaries, and zero broken relative Markdown links.
+- **Structural check (`check_skill_spec.py`)**: Valid YAML Frontmatter, `description` stating both quoted trigger phrases and exclusion boundaries without banned terms, zero broken or case-mismatched relative Markdown links, and all files under `references/`, `assets/`, and `scripts/` reachable from `SKILL.md`.
 - **Writing audit (`detect.py`)**: Zero hits reported. If a hit matches a documented exception in `pattern-catalog.md`, state the exemption rationale in your PR description.
 
 Additionally, ensure all scripts rely exclusively on the Python 3 standard library with zero external `pip` dependencies.

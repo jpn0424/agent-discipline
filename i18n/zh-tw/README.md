@@ -143,7 +143,7 @@ agent-discipline/
             │   │   ├── core-rules/             # 11 條核心約束規範
             │   │   └── methods/                # 2 份執行方法的校準
             │   ├── assets/                     # 治理範本：agents-template.md, task-template.md, decision-template.md
-            │   └── scripts/check_skill_spec.py # 無依賴結構檢查，驗 frontmatter、連結與各平台入口檔
+            │   └── scripts/check_skill_spec.py # 無依賴結構檢查，驗 frontmatter、連結、檔案可達性與各平台入口檔
             └── deliverable-writing-audit/
                 ├── SKILL.md                    # 主入口：稽核步驟、模式、分級、輸出格式
                 ├── references/

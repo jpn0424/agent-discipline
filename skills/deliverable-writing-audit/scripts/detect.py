@@ -258,7 +258,7 @@ def guess_profile(path: Path) -> str:
     the subject matter rather than noise. Pass `--profile agent-facing`
     explicitly when auditing business-agent Skills.
     """
-    p = "/" + str(path).replace("\\", "/").lstrip("./")
+    p = "/" + re.sub(r"^(?:\./)+", "", str(path).replace("\\", "/")).lstrip("/")
     name = path.name
     if name in {"CHANGELOG.md", "decisions.md"} or "release-notes" in p:
         return "changelog"

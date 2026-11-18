@@ -54,6 +54,12 @@ When a query returns no data, the required action is to report "not found"—nev
 
 To tell whether you are legitimately refining a search or improperly working around a missing fact, check your motive: are you changing the query because you realized a more accurate lookup key, or because the canonical lookup returned empty? If the latter, stop immediately. Falling back to an unrelated source, substituting a similarly named field, or fabricating a placeholder value are all variations of the same failure; see [Core Rule 07](07-protocol-tool-hygiene.md).
 
+When a deliverable presents quantitative analysis or compiled figures, distinguish three categories explicitly so downstream readers never mistake derived or estimated numbers for verified source facts:
+
+- **Verbatim source figures**: Values quoted directly from an inspected file or tool output, with the source pointer preserved alongside the claim.
+- **Derived calculations**: Totals, ratios, or deltas computed from source figures, stating the formula and exact inputs explicitly.
+- **Unverified estimates**: Projections or bounds lacking direct measurement, marked explicitly with their estimation basis and never presented as raw facts.
+
 ### 6. Validate the Instrument
 
 The criterion is **"have I verified that this checking tool actually measures the property I am claiming?"** Scripts, CLI commands, and regex scans produce **raw observations**; they become evidence only after you confirm the instrument is calibrated.
@@ -63,7 +69,7 @@ Instrument failures take two forms:
 | Distortion Mode | Observable Manifestation |
 | --- | --- |
 | Instrument misses the target phenomenon | Keyword scans only catch predetermined strings and miss self-contradictions, outdated claims phrased in new words, or omitted sections. In one recorded case, the top of a file claimed "X is impossible" while the bottom showed a passing test for X, and the keyword scanner reported zero issues |
-| Implementation diverges from the criterion | The underlying criterion is sound, but the script fails to implement it—for example, non-recursive directory traversal, overly broad regexes that flag valid syntax, or shell glob expansion swallowing arguments |
+| Implementation diverges from the criterion | The underlying criterion is sound, but the script fails to implement it—for example, non-recursive directory traversal, overly broad regexes that flag valid syntax, shell glob expansion swallowing arguments, or matching against truncated command-line parameters in stream telemetry logs, requiring cross-checks against tool output and actual filesystem state |
 
 Before trusting a new checking script or command for the first time, calibrate it against two known samples: **one guaranteed to pass, and one guaranteed to fail**. Testing only the passing direction misses instruments that falsely reject valid work or silently pass everything.
 

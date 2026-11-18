@@ -134,7 +134,7 @@ agent-discipline/
 │   │   │   ├── core-rules/                     # 11 core engineering rules
 │   │   │   └── methods/                        # 2 calibrated execution method deltas
 │   │   ├── assets/                             # Governance templates: agents-template.md, task-template.md, decision-template.md
-│   │   └── scripts/check_skill_spec.py         # Zero-dependency structural & link checker
+│   │   └── scripts/check_skill_spec.py         # Zero-dependency structural, link & reachability checker
 │   └── deliverable-writing-audit/
 │       ├── SKILL.md                            # Main entrypoint: 6 audit steps, modes, severity, output format
 │       ├── references/

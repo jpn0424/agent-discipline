@@ -69,6 +69,13 @@ When you spot an important issue outside the question's scope, apply the same co
 
 Multi-turn conversations suffer from a second form of drift: shifting slightly each turn until you are solving a problem the user never asked about. The criterion is **"does the current turn's output still map directly to the user's initial request?"** If not, pause, point out where the trajectory drifted, and re-align before continuing.
 
+### 7. Cross-Workspace Compound Instructions
+
+When a single prompt combines work in the current workspace with inspecting, modifying, or running commands in another local repository, the criterion is **"does the current workspace's governance contract authorize mutating or executing code in that external repository?"**
+
+- **Read-only contract discovery first**: Before inspecting files in an external local repository, read its root `AGENTS.md` or platform entrypoint first and follow its rules throughout inspection.
+- **Separate control plane from execution plane**: When the current workspace's governance rules restrict cross-repository writes, or when the prompt mentions an external repository only as a side clause without explicit authorization to modify or execute code in it, never edit files, commit or push branches, or execute build or deployment scripts in that external repository from the current session. Produce review findings and a structured handoff work item per [Core Rule 04](04-delegation-contract.md), and ask or instruct the user to run the changes in the target repository.
+
 ---
 
 ## Gotchas
@@ -98,3 +105,11 @@ From real failures, not derived rules.
 **Why it goes unnoticed**: Every extra point you include is factually true and genuinely related. The failure is not inaccuracy, but dilution of the specific decision the user is trying to make.
 
 **Criterion**: Answer the exact item asked first and stop. Mention related topics in a single sentence so the user can choose whether to open them. Never inflate feedback about surface formatting into an unrequested structural overhaul.
+
+### Compound Instructions Across Repositories Bypass Workspace Boundaries
+
+**When it happens**: A single prompt asks to update a local governance or design document and, in the next clause, tweak a script or run deployment checks in a sibling local repository.
+
+**Why it goes unnoticed**: Both requests arrive in one sentence, and running the second clause immediately appears to finish the whole prompt in one turn. The workspace boundary disappears because the shell can traverse relative paths with `..` even when the active governance context only authorizes the current repository.
+
+**Criterion**: Split every compound prompt by repository boundary before running tools. Always read the external repository's root `AGENTS.md` before inspecting it; unless the user has explicitly authorized mutating that external repository and the current workspace permits cross-repository writes, keep access strictly read-only and hand off any external edits or execution as a self-contained work item.

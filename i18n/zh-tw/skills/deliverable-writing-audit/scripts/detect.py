@@ -254,7 +254,7 @@ def guess_profile(path: Path) -> str:
     業務 agent 還是開發者。談開發工作流的 Skill，`Harness`、各平台設定目錄、`本機`
     正是它的主題而非雜訊。需要 `agent-facing` 的加嚴時以 `--profile` 明指。
     """
-    p = "/" + str(path).replace("\\", "/").lstrip("./")
+    p = "/" + re.sub(r"^(?:\./)+", "", str(path).replace("\\", "/")).lstrip("/")
     name = path.name
     if name in {"CHANGELOG.md", "decisions.md"} or "release-notes" in p:
         return "changelog"

@@ -36,7 +36,7 @@ Four components are mandatory:
 | --- | --- | --- |
 | Core capability | Concrete actions performed and artifacts produced | Vague category labels such as "A skill suite for..." |
 | Applicable scenarios | Specific task contexts where the Skill applies | Broad domain nouns that match almost every conversation |
-| User trigger phrases | Realistic user intents and keywords | Omitting triggers—this is the primary driver of recall |
+| User trigger phrases | Quoted realistic user intents and keywords | Omitting quoted triggers—this is the primary driver of recall |
 | Exclusion boundary | Explicit adjacent scenarios where the Skill must not load | Omitting exclusions—purely positive triggers over-fire |
 
 Place the exclusion boundary in the middle of `description` and reserve the final sentence for an explicit positive load directive, stating clearly when the Skill must be loaded even if the user never mentions the Skill by name. Putting a negative exclusion at the very end causes models to anchor on "do not use."
@@ -50,7 +50,7 @@ Four patterns must never appear in `description`:
 
 These criteria are codified as rules rather than left to intuition because the defect recurs repeatedly: even after one round of cleanup, newly created Skills still open with metaphors. Checking a new `description` against this table item by item is a mandatory step whenever authoring a Skill.
 
-Every structural requirement in this section is deterministically verifiable, **so it is enforced by script rather than by human vigilance**. Run `scripts/check_skill_spec.py` after editing any Skill; see the `Structure Check` section of `SKILL.md` for usage. This marks the exact boundary of when a rule should be a prose hard constraint: if a check can be mechanized in a script, put it in a script and reserve prose rules for what scripts cannot judge.
+Every structural requirement in this section is deterministically verifiable, **so it is enforced by script rather than by human vigilance**. Run `scripts/check_skill_spec.py` after editing any Skill to verify frontmatter fields, exclusion boundaries and quoted trigger phrases in `description`, absence of banned superlatives or platform-mechanics terms, relative links, and reachability of every file under `references/`, `assets/`, and `scripts/` from `SKILL.md`; see the `Structure Check` section of `SKILL.md` for usage. This marks the exact boundary of when a rule should be a prose hard constraint: if a check can be mechanized in a script, put it in a script and reserve prose rules for what scripts cannot judge.
 
 ### 2. Entry File Points, Not Restates
 
@@ -94,6 +94,9 @@ Reversing this order—writing a comprehensive rulebook first and looking for te
 
 Never let the session that authored the Skill self-certify its evaluation; run behavioral validation in a clean session with zero authoring context, matching the separation principle in [Core Rule 04](04-delegation-contract.md).
 
+Keep comparison groups isolated at the filesystem level when running sandboxed evaluations. Never place control and Skill-enabled workspaces side by side under a shared parent directory during concurrent runs: an agent in the unassisted control group can traverse `..` to inspect and copy Skills or outputs from sibling directories, invalidating the baseline. Execute groups sequentially after cleaning prior sandboxes using the recoverable deletion rules in [Core Rule 05](05-execution-safety.md), or isolate each run under an independent temporary root.
+
 ### 5. Two-Tier Subagent Governance (Developer vs. Validator)
 - **Developer Agent (Primary Executor)**: Writes code, updates specifications, and prepares work items.
 - **Validator Subagent (Independent Verifier)**: When verifying MCP tools or end-to-end natural-language workflows, delegate verification to an independent subagent with a clean context window to exercise the real user interface without author bias.
+- **Model Tier Routing by Task Complexity**: Match the model tier and reasoning effort to the delegated task rather than defaulting every invocation to the highest-tier model—use lightweight fast models for mechanical checks and diff verification, mid-tier models for standard implementation and rule audits, and top-tier reasoning models only for complex architectural design or ambiguous multi-hop debugging.

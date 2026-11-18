@@ -22,12 +22,14 @@ path 可以是 Skill 目錄本身、包含多個 Skill 的目錄、或專案根�
 from __future__ import annotations
 
 import argparse
+from collections import deque
 import json
 import os
 import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+from urllib.parse import unquote
 
 # ---------------------------------------------------------------- 平台限制
 
@@ -54,12 +56,29 @@ RE_FRONTMATTER_FENCE = re.compile(r"^---\s*$")
 # 避免引入外部依賴。巢狀清單以縮排辨識，本腳本只取頂層鍵。
 RE_TOP_LEVEL_KEY = re.compile(r"^([A-Za-z][A-Za-z0-9_-]*)\s*:\s*(.*)$")
 
-# 本機絕對路徑的偵測由 deliverable-writing-audit 的 detect.py 負責，此處不重複實作。
-# 那支腳本會先遮蔽 inline code 與程式碼區塊，才不會把規則裡的壞例子示範當成命中。
-
 # 程式碼區塊與 inline code 內的連結是格式示例而非真實連結，比對前先遮蔽。
 RE_FENCE = re.compile(r"^\s*(?:```|~~~)")
 RE_INLINE_CODE = re.compile(r"`[^`]*`")
+
+# Frontmatter `description` 啟發式檢核（規則 11）：檢查排除邊界、使用者觸發語句，以及禁用誇飾與平台機制詞。
+RE_DESC_EXCLUSION = re.compile(
+    r"(?:不適用|不要(?:載入|用|使用)|不得(?:載入|用|使用)|切勿(?:載入|用|使用)"
+    r"|請勿(?:載入|用|使用)|不應(?:載入|用|使用)|毋須(?:載入|用|使用)|無須(?:載入|用|使用)"
+    r"|不處理|不用於|不使用|排除(?:時機|情境|條件|範圍|於)"
+    r"|\b(?:do\s+not|don't|never|must\s+not|should\s+not)\s+(?:load|use|apply|invoke|trigger)\b"
+    r"|\b(?:not\s+(?:for|applicable|suitable|used\s+for|intended\s+for)|does\s+not\s+apply|skip\s+(?:when|for|if))\b)",
+    re.IGNORECASE,
+)
+RE_DESC_TRIGGERS = re.compile(
+    r"(?:「\s*\S[^」\n]*\S\s*」|『\s*\S[^』\n]*\S\s*』|“\s*\S[^”\n]*\S\s*”|‘\s*\S[^’\n]*\S\s*’"
+    r"|(?<![A-Za-z0-9])'\s*\S[^'\n]*\S\s*'(?![A-Za-z0-9])"
+    r"|(?<![A-Za-z0-9])\"\s*\S[^\"\n]*\S\s*\"(?![A-Za-z0-9]))"
+)
+RE_DESC_BANNED = re.compile(
+    r"(?:(?<!不會)(?<!並非)(?<!不是)(?<!不屬)(?<!不要)(?<!不得)(?<![不非無])(?:自動觸發|自動載入|全面|強大)"
+    r"|(?<!\bnot\s)(?<!\bnever\s)(?<!\bno\s)\b(?:comprehensive|powerful|robust|automatically\s+(?:triggered|loaded)|auto[- ](?:triggered|loaded))\b)",
+    re.IGNORECASE,
+)
 
 # 各平台入口檔（規則 10）。每個都是薄薄一層，只能把 agent 導向唯一正本 AGENTS.md。
 #
@@ -118,13 +137,20 @@ def read_text(path: Path) -> str:
     try:
         return path.read_text(encoding="utf-8")
     except UnicodeDecodeError:
-        # 非 UTF-8 的規範文件本身就是缺陷，但讀不到內容就無法檢查其他項目，
-        # 因此改用寬鬆解碼繼續往下跑，並由呼叫端另外標記編碼問題。
+        # 非 UTF-8 的規範文件改用寬鬆解碼繼續往下跑。
         return path.read_text(encoding="utf-8", errors="replace")
 
 
+def strip_outer_quotes(val: str) -> str:
+    """成對移除 YAML 外層引號，避免誤刪未加引號字串結尾的引號。"""
+    val = val.strip()
+    if len(val) >= 2 and val[0] == val[-1] and val[0] in ("\"", "'"):
+        return val[1:-1]
+    return val
+
+
 def parse_frontmatter(text: str) -> tuple[dict[str, str], int, str | None]:
-    """解析 frontmatter。
+    """解析 frontmatter（含 YAML 多行區塊與摺疊純量）。
 
     回傳 (頂層鍵值, frontmatter 結束行號, 錯誤說明)。錯誤說明為 None 表示解析成功。
     行號從 1 起算，供回報定位。
@@ -142,12 +168,59 @@ def parse_frontmatter(text: str) -> tuple[dict[str, str], int, str | None]:
         return {}, 0, "Frontmatter 的結束分隔線缺失"
 
     fields: dict[str, str] = {}
-    for raw in lines[1:end]:
-        if not raw.strip() or raw.startswith((" ", "\t", "-")):
+    fm_lines = lines[1:end]
+    i = 0
+    while i < len(fm_lines):
+        raw = fm_lines[i]
+        if not raw.strip() or raw.lstrip().startswith("#") or raw.startswith((" ", "\t", "-")):
+            i += 1
             continue
         match = RE_TOP_LEVEL_KEY.match(raw)
-        if match:
-            fields[match.group(1)] = match.group(2).strip().strip("\"'")
+        if not match:
+            i += 1
+            continue
+        key = match.group(1)
+        val = match.group(2).strip()
+        if val in ("|", "|-", "|+", ">", ">-", ">+"):
+            joiner = "\n" if val.startswith("|") else " "
+            cont: list[str] = []
+            i += 1
+            while i < len(fm_lines):
+                nxt = fm_lines[i]
+                if not nxt.strip():
+                    cont.append("")
+                    i += 1
+                elif nxt.startswith((" ", "\t")):
+                    cont.append(nxt.strip())
+                    i += 1
+                else:
+                    break
+            fields[key] = strip_outer_quotes(joiner.join(p for p in cont if p))
+        elif val == "":
+            cont = []
+            i += 1
+            while i < len(fm_lines):
+                nxt = fm_lines[i]
+                if not nxt.strip():
+                    cont.append("")
+                    i += 1
+                elif nxt.startswith((" ", "\t")) and not nxt.lstrip().startswith("- "):
+                    cont.append(nxt.strip())
+                    i += 1
+                else:
+                    break
+            fields[key] = strip_outer_quotes(" ".join(p for p in cont if p))
+        else:
+            cont = [val]
+            i += 1
+            while i < len(fm_lines):
+                nxt = fm_lines[i]
+                if nxt.startswith((" ", "\t")) and not nxt.lstrip().startswith("- "):
+                    cont.append(nxt.strip())
+                    i += 1
+                else:
+                    break
+            fields[key] = strip_outer_quotes(" ".join(cont))
     return fields, end + 1, None
 
 
@@ -201,9 +274,11 @@ def check_skill(skill_dir: Path, report: Report) -> None:
     description = fields.get("description", "")
     if not description:
         report.add("P0", "description-missing", skill_md, 1, "Frontmatter 缺少 `description`")
-    if len(description) > DESCRIPTION_MAX_LEN:
-        report.add("P0", "description-length", skill_md, 1,
-                   f"`description` 長度 {len(description)} 超過規格上限 {DESCRIPTION_MAX_LEN}")
+    else:
+        if len(description) > DESCRIPTION_MAX_LEN:
+            report.add("P0", "description-length", skill_md, 1,
+                       f"`description` 長度 {len(description)} 超過規格上限 {DESCRIPTION_MAX_LEN}")
+        check_description_quality(skill_md, description, report)
 
     for field in fields:
         if field not in ALLOWED_FIELDS:
@@ -220,6 +295,20 @@ def check_skill(skill_dir: Path, report: Report) -> None:
     check_no_symlinks_in_skill(skill_dir, report)
     check_no_frontmatter_in_subfiles(skill_dir, report)
     check_relative_links(skill_dir, report)
+    check_no_orphan_files(skill_dir, report)
+
+
+def check_description_quality(skill_md: Path, description: str, report: Report) -> None:
+    """依規則 11 檢查 frontmatter `description` 是否具備必要成分且不含禁用詞。"""
+    if not RE_DESC_EXCLUSION.search(description):
+        report.add("P1", "description-missing-exclusion", skill_md, 1,
+                   "`description` 缺少明確的排除時機，例如「…時不適用」或「Do not load when…」")
+    if not RE_DESC_TRIGGERS.search(description):
+        report.add("P1", "description-missing-triggers", skill_md, 1,
+                   "`description` 缺少以引號標示的使用者觸發語句")
+    for match in RE_DESC_BANNED.finditer(description):
+        report.add("P1", "description-banned-term", skill_md, 1,
+                   f"`description` 含禁用的無判準褒詞或平台機制詞 `{match.group(0)}`")
 
 
 def check_no_symlinks_in_skill(skill_dir: Path, report: Report) -> None:
@@ -255,32 +344,237 @@ def check_no_frontmatter_in_subfiles(skill_dir: Path, report: Report) -> None:
                            f"`{sub}/` 之下的檔案帶 frontmatter，該欄位不會生效")
 
 
-def check_relative_links(skill_dir: Path, report: Report) -> None:
-    """Skill 內部連結必須是可解析的相對路徑。
+def clean_link_target(raw_target: str) -> str:
+    """擷取 Markdown 連結目標的路徑部分並進行百分比解碼。"""
+    s = raw_target.strip()
+    if s.startswith("<"):
+        end = s.find(">")
+        if end != -1:
+            s = s[1:end].strip()
+    else:
+        title_match = re.match(r'^(\S+)(?:\s+(?:"[^"]*"|\'[^\']*\'|\([^)]*\)))?$', s)
+        if title_match:
+            s = title_match.group(1)
+    return unquote(s.split("#", 1)[0].split("?", 1)[0].strip())
 
-    程式碼區塊與 inline code 內的連結是格式示例，例如工項範本示範怎麼引用截圖，
-    那些路徑本來就不存在，比對前先遮蔽避免誤判。
-    """
+
+def strip_html_comments(text: str) -> str:
+    """移除 Markdown 中的 HTML 註解。"""
+    return re.sub(r"<!--.*?-->", "", text, flags=re.S)
+
+
+def iter_markdown_prose_lines(text: str):
+    """逐行產生 (1 起算行號, 遮蔽行)，略過圍欄程式碼區塊、HTML 註解與 inline code。"""
+    in_fence = False
+    in_comment = False
+    for lineno, raw in enumerate(text.splitlines(), start=1):
+        if RE_FENCE.match(raw):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        line = raw
+        if in_comment:
+            end_idx = line.find("-->")
+            if end_idx == -1:
+                continue
+            line = line[end_idx + 3:]
+            in_comment = False
+        line = re.sub(r"<!--.*?-->", "", line)
+        open_idx = line.find("<!--")
+        if open_idx != -1:
+            line = line[:open_idx]
+            in_comment = True
+        yield lineno, RE_INLINE_CODE.sub("``", line)
+
+
+def collect_disk_relpaths(skill_dir: Path) -> set[str]:
+    """收集磁碟上 `skill_dir` 內所有實體項目的精確大小寫相對 POSIX 路徑。"""
+    relpaths: set[str] = set()
+    for dirpath, dirs, files in os.walk(skill_dir, followlinks=False):
+        dirs[:] = [d for d in dirs if d not in {".git", "__pycache__"}]
+        base = Path(dirpath)
+        for name in dirs + files:
+            if name == "__pycache__" or name.endswith(".pyc"):
+                continue
+            p = base / name
+            relpaths.add(p.relative_to(skill_dir).as_posix())
+    return relpaths
+
+
+def check_relative_links(skill_dir: Path, report: Report) -> None:
+    """Skill 內部連結必須是可解析且大小寫精確相符的相對路徑。"""
+    skill_root = skill_dir.resolve()
+    disk_relpaths = collect_disk_relpaths(skill_dir)
     link_pattern = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
     for md in sorted(skill_dir.rglob("*.md")):
-        in_fence = False
-        for lineno, raw in enumerate(read_text(md).splitlines(), start=1):
-            if RE_FENCE.match(raw):
-                in_fence = not in_fence
-                continue
-            if in_fence:
-                continue
-            masked = RE_INLINE_CODE.sub("``", raw)
+        for lineno, masked in iter_markdown_prose_lines(read_text(md)):
             for target in link_pattern.findall(masked):
-                if target.startswith(("http://", "https://", "#", "mailto:")):
+                cleaned = clean_link_target(target)
+                if not cleaned or cleaned.startswith(("http://", "https://", "mailto:")):
                     continue
-                if target.startswith("/"):
+                if cleaned.startswith("/"):
                     report.add("P1", "absolute-link", md, lineno,
                                f"連結 `{target}` 以斜線開頭，安裝到其他專案會失效")
                     continue
-                resolved = (md.parent / target.split("#", 1)[0]).resolve()
+                try:
+                    resolved = (md.parent / cleaned).resolve()
+                except (OSError, ValueError):
+                    report.add("P1", "dead-link", md, lineno, f"連結 `{target}` 指向無效路徑")
+                    continue
                 if not resolved.exists():
                     report.add("P1", "dead-link", md, lineno, f"連結 `{target}` 指向不存在的路徑")
+                    continue
+                if skill_root in resolved.parents:
+                    rel_posix = (md.parent / cleaned).resolve().relative_to(skill_root).as_posix()
+                    norm_posix = os.path.normpath((md.parent.relative_to(skill_dir) / cleaned).as_posix()).replace("\\", "/")
+                    if rel_posix not in disk_relpaths or norm_posix not in disk_relpaths:
+                        report.add("P1", "dead-link", md, lineno,
+                                   f"連結 `{target}` 與磁碟實際檔名大小寫不相符")
+
+
+def check_no_orphan_files(skill_dir: Path, report: Report) -> None:
+    """Skill 內 references/、assets/ 與 scripts/ 底下的檔案必須能從 SKILL.md 觸及。
+
+    檢查故意涵蓋圍欄 CLI 程式碼區塊中的子路徑參照，因 Skill 常於 bash 範例呼叫 `scripts/*.py`。
+    """
+    skill_root = skill_dir.resolve()
+    all_subfiles: dict[str, Path] = {}
+    for sub in ("references", "assets", "scripts"):
+        base = skill_dir / sub
+        if not base.is_dir() or base.is_symlink():
+            continue
+        for dirpath, dirs, files in os.walk(base, followlinks=False):
+            dirs[:] = [d for d in dirs if d != "__pycache__" and not d.startswith(".")]
+            base_path = Path(dirpath)
+            for fname in files:
+                if fname.startswith(".") or fname.endswith(".pyc"):
+                    continue
+                candidate = base_path / fname
+                if candidate.is_symlink():
+                    continue
+                rel_posix = candidate.relative_to(skill_dir).as_posix()
+                all_subfiles[rel_posix] = candidate
+
+    if not all_subfiles:
+        return
+
+    link_pattern = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
+    inline_code_pattern = re.compile(r"`([^`\n]+)`")
+    subpath_pattern = re.compile(r"((?:references|assets|scripts)/[A-Za-z0-9_./-]+)")
+    asset_quote_pattern = re.compile(
+        r"""["']([^"'\n\s]+\.(?:md|py|sh|js|css|html|json|txt|yaml|yml|toml|svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|otf|csv|tsv|sql|xml))["']""",
+        re.IGNORECASE,
+    )
+    css_url_pattern = re.compile(r"url\(\s*['\"]?([^'\"\)\s#?,]+)['\"]?\s*\)", re.IGNORECASE)
+    html_attr_pattern = re.compile(r"\b(?:src|href)=([^\s\"'>]+)", re.IGNORECASE)
+    py_from_pattern = re.compile(r"^\s*from\s+(\.*)([A-Za-z0-9_.]*)\s+import\s+([^\n#]+)", re.M)
+    py_imp_pattern = re.compile(r"^\s*import\s+([^\n#]+)", re.M)
+    bfs_suffixes = {".md", ".py", ".sh", ".js", ".html", ".css", ".json"}
+
+    visited: set[str] = set()
+    referenced: set[str] = set()
+    queue: deque[str] = deque(["SKILL.md"])
+
+    while queue:
+        cur_rel = queue.popleft()
+        cur_path = skill_dir / cur_rel
+        if cur_rel in visited or not cur_path.is_file():
+            continue
+        visited.add(cur_rel)
+        text = read_text(cur_path)
+        cands: list[Path] = []
+        rel_cands: list[str] = []
+
+        def add_cand(base: Path, rel_str: str) -> None:
+            cands.append(base / rel_str)
+            rel_cands.append((base.relative_to(skill_dir) / rel_str).as_posix())
+
+        if cur_path.suffix == ".md":
+            for _, masked in iter_markdown_prose_lines(text):
+                for target in link_pattern.findall(masked):
+                    cleaned = clean_link_target(target)
+                    if not cleaned or cleaned.startswith(("http://", "https://", "mailto:", "/")):
+                        continue
+                    add_cand(cur_path.parent, cleaned)
+
+            comment_free = strip_html_comments(text)
+            for code in inline_code_pattern.findall(comment_free):
+                for tok in code.split():
+                    tok_clean = tok.strip(".,;:()[]{}\"'").split("#", 1)[0]
+                    if not tok_clean:
+                        continue
+                    if "/" in tok_clean or tok_clean.endswith(tuple(bfs_suffixes)):
+                        add_cand(skill_dir, tok_clean)
+                        add_cand(cur_path.parent, tok_clean)
+
+            for m in subpath_pattern.finditer(comment_free):
+                rel = m.group(1).rstrip(".,;:")
+                add_cand(skill_dir, rel)
+                add_cand(cur_path.parent, rel)
+        else:
+            scan_text = strip_html_comments(text) if cur_path.suffix in {".html", ".svg", ".xml"} else text
+            for m in subpath_pattern.finditer(scan_text):
+                rel = m.group(1).rstrip(".,;:")
+                add_cand(skill_dir, rel)
+                add_cand(cur_path.parent, rel)
+            for q in asset_quote_pattern.findall(scan_text):
+                add_cand(cur_path.parent, q)
+                add_cand(skill_dir, q)
+            for raw_url in css_url_pattern.findall(scan_text) + html_attr_pattern.findall(scan_text):
+                cleaned = clean_link_target(raw_url)
+                if not cleaned or cleaned.startswith(("http://", "https://", "mailto:", "/", "data:")):
+                    continue
+                add_cand(cur_path.parent, cleaned)
+                add_cand(skill_dir, cleaned)
+            if cur_path.suffix == ".py":
+                for dots, mod_base, names in py_from_pattern.findall(text):
+                    up = max(0, len(dots) - 1)
+                    rel_anchor = cur_path.parent
+                    for _ in range(up):
+                        if skill_dir in rel_anchor.parents:
+                            rel_anchor = rel_anchor.parent
+                    roots = [rel_anchor] if dots else [cur_path.parent, skill_dir / "scripts"]
+                    bases = [mod_base.replace(".", "/")] if mod_base else []
+                    for item in names.split(","):
+                        ident = item.strip().split()[0] if item.strip() else ""
+                        if ident and ident != "*" and not ident.startswith("("):
+                            if mod_base:
+                                bases.append(f"{mod_base.replace('.', '/')}/{ident}")
+                            else:
+                                bases.append(ident)
+                    for r in roots:
+                        if not r.is_dir():
+                            continue
+                        for b in bases:
+                            add_cand(r, f"{b}.py")
+                            add_cand(r, f"{b}/__init__.py")
+                for names in py_imp_pattern.findall(text):
+                    for item in names.split(","):
+                        mod_name = item.strip().split()[0] if item.strip() else ""
+                        if mod_name:
+                            mod_rel = mod_name.replace(".", "/")
+                            for r in (cur_path.parent, skill_dir / "scripts"):
+                                if r.is_dir():
+                                    add_cand(r, f"{mod_rel}.py")
+                                    add_cand(r, f"{mod_rel}/__init__.py")
+
+        norm_cands = {os.path.normpath(rc).replace("\\", "/") for rc in rel_cands}
+        for cand in cands:
+            try:
+                p = cand.resolve()
+            except (OSError, ValueError):
+                continue
+            if p.is_file() and skill_root in p.parents:
+                rel_posix = p.relative_to(skill_root).as_posix()
+                if rel_posix in all_subfiles and rel_posix in norm_cands:
+                    referenced.add(rel_posix)
+                    if Path(rel_posix).suffix in bfs_suffixes and rel_posix not in visited:
+                        queue.append(rel_posix)
+
+    for rel_path in sorted(all_subfiles.keys() - referenced):
+        report.add("P1", "orphan-file", all_subfiles[rel_path], 1,
+                   f"檔案 `{rel_path}` 未被 SKILL.md 或任何可觸及的參考文件參照")
 
 
 # ---------------------------------------------------------------- Harness 檢查

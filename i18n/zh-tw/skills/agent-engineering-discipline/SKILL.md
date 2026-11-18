@@ -15,17 +15,17 @@ description: "處理一件開發任務的治理紀律：改檔前先建立工項
 
 | 規則 | 規範範疇 |
 | --- | --- |
-| [Core Rule 01](references/core-rules/01-judgement-responsibility.md) | 判斷責任：自主推進與提問回報的邊界 |
-| [Core Rule 02](references/core-rules/02-authorization-boundary.md) | 授權邊界：動作授權、動詞定義與操作範圍鎖定 |
-| [Core Rule 03](references/core-rules/03-task-ticket-discipline.md) | 工項建立、狀態流轉、驗收條件與截圖紀錄 |
+| [Core Rule 01](references/core-rules/01-judgement-responsibility.md) | 判斷責任：自主查證、大批量輸入收斂與提問回報的邊界 |
+| [Core Rule 02](references/core-rules/02-authorization-boundary.md) | 授權邊界：遠端寫入當次授權、指令動詞、範圍鎖定與跨工作區隔離 |
+| [Core Rule 03](references/core-rules/03-task-ticket-discipline.md) | 工項紀律：工項建立、狀態流轉、驗收條件與截圖紀錄 |
 | [Core Rule 04](references/core-rules/04-delegation-contract.md) | 委派契約：任務交接時的輸入與驗收完備性 |
-| [Core Rule 05](references/core-rules/05-execution-safety.md) | 執行安全：不可復原操作之邊界與資源清理 |
+| [Core Rule 05](references/core-rules/05-execution-safety.md) | 執行安全：不可逆操作的限制、外部資源清理與腳本目錄安全邊界 |
 | [Core Rule 06](references/core-rules/06-implementation-restraint.md) | 最小實作與相容邊界：夠用為準與相容性維護 |
 | [Core Rule 07](references/core-rules/07-protocol-tool-hygiene.md) | 協定與 Schema：stdout 隔離與零臆測 Schema |
-| [Core Rule 08](references/core-rules/08-honesty-and-evidence.md) | 誠實與證據：宣稱、證據有效性與能力邊界宣告 |
+| [Core Rule 08](references/core-rules/08-honesty-and-evidence.md) | 誠實與證據：宣稱附證據、量化數值來源區分、能力狀態與工具校準 |
 | [Core Rule 09](references/core-rules/09-deliverable-hygiene.md) | 交付物與 ADR：交付物純化、決策紀錄與稽核閘門 |
-| [Core Rule 10](references/core-rules/10-harness-doc-layout.md) | Harness 文件分工：AGENTS.md 正本與工具版式分工 |
-| [Core Rule 11](references/core-rules/11-skill-and-agent-spec.md) | Skill 規格與雙層治理：Skill 撰寫規範與驗證者委派 |
+| [Core Rule 10](references/core-rules/10-harness-doc-layout.md) | Harness 文件分工：AGENTS.md 正本、常駐篇幅預算、快速通道與工具入口分工 |
+| [Core Rule 11](references/core-rules/11-skill-and-agent-spec.md) | Skill 規格與雙層治理：Skill 撰寫規範、沙盒基線評估與驗證者委派 |
 
 本規範的條文分為兩種執行強度：
 
@@ -58,7 +58,7 @@ description: "處理一件開發任務的治理紀律：改檔前先建立工項
 | 動作 | 失誤形態 | 適用規則 |
 | --- | --- | --- |
 | 判斷 | 用猜測填掉查得到的空白；修改架構或規範前未先讀取專案既有的 `decisions.md` 核對已否決方案；或反過來，把使用者已經表態的決策再推回去問 | [Core Rule 01](references/core-rules/01-judgement-responsibility.md)、[Core Rule 08](references/core-rules/08-honesty-and-evidence.md)、[Core Rule 09](references/core-rules/09-deliverable-hygiene.md) |
-| 授權 | 動詞是「審查」卻動了手；回答的範圍超出被問的範圍 | [Core Rule 02](references/core-rules/02-authorization-boundary.md) |
+| 授權 | 動詞是「審查」卻動了手；因附帶子句越界改動外部倉庫；回答的範圍超出被問的範圍 | [Core Rule 02](references/core-rules/02-authorization-boundary.md) |
 | 定義 | 沒有紀錄就動手；驗收判準留到看見結果之後才定 | [Core Rule 03](references/core-rules/03-task-ticket-discipline.md)、[Core Rule 04](references/core-rules/04-delegation-contract.md) |
 | 執行 | 建設用不到的抽象；擅自移除還在運作的相容層；憑記憶臆測結構定義 | [Core Rule 06](references/core-rules/06-implementation-restraint.md)、[Core Rule 07](references/core-rules/07-protocol-tool-hygiene.md) |
 | 取證 | 採信沒校準過的判定工具；用繞過使用者實際鏈路的方式驗證 | [Core Rule 02](references/core-rules/02-authorization-boundary.md)、[Core Rule 08](references/core-rules/08-honesty-and-evidence.md)、[Core Rule 09](references/core-rules/09-deliverable-hygiene.md) |
@@ -92,4 +92,4 @@ python3 scripts/check_skill_spec.py <專案路徑>
 # 選項：--json 輸出結構化結果
 ```
 
-無外部依賴，Python 3 標準庫即可。結束碼 `0` 表示通過、`1` 表示有缺陷、`2` 表示執行錯誤。檢查確定性的結構事實：frontmatter 完整性、`name` 命名、禁止角括號標籤、目錄內不得放 README.md、目錄內不得包含符號連結、子目錄無多餘 frontmatter、相對連結有效性，以及規則 10 定義的每個平台入口檔都只能指向 `AGENTS.md`（短參照檔或指向它的 symlink 皆可）。
+無外部依賴，Python 3 標準庫即可。結束碼 `0` 表示通過、`1` 表示有缺陷、`2` 表示執行錯誤。檢查確定性的結構事實：frontmatter 完整性、`name` 命名、`description` 的排除時機與引號觸發語句及禁用詞檢核、禁止角括號標籤、目錄內不得放 README.md、目錄內不得包含符號連結、子目錄無多餘 frontmatter、相對連結有效性、Skill 內 `references/`、`assets/` 與 `scripts/` 底下檔案從 `SKILL.md` 出發的可達性檢核，以及規則 10 定義的每個平台入口檔都只能指向 `AGENTS.md`（短參照檔或指向它的 symlink 皆可）。

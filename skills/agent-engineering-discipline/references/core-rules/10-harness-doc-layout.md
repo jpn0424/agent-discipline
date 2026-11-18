@@ -3,7 +3,7 @@
 ## Contents
 
 - 1. Canonical Source vs. Pointers: `AGENTS.md` is the single canonical source; other entrypoints contain only a pointer
-- 2. Canonical Structure of `AGENTS.md`: Four ordered sections, rule formatting, binary deontic strength, fixed modal verbs, and list exhaustiveness markers
+- 2. Canonical Structure of `AGENTS.md`: Four ordered sections, context budget, fast-path routing, rule formatting, binary deontic strength, fixed modal verbs, and list exhaustiveness markers
 - 3. Division Between `docs/` and `references/`: The criterion is who authors the file, not its topic
 - 4. Declared Duplication: Valid only across an always-loaded vs. conditionally-loaded boundary
 - Gotchas: Confusing two documentation directories when topics overlap, and treating human entrypoints as a miscellaneous catch-all
@@ -69,6 +69,8 @@ When every rule is written at maximum strength, the agent cannot tell which boun
 **Mark lists as exhaustive or illustrative.** Introduce exhaustive enumerations with `only` or an explicit count (`the four values below`); introduce open examples with `for example` or `such as`. Unmarked lists in technical specifications are frequently misread as closed enumerations, causing agents to treat unlisted cases as exempt.
 
 Highlight critical preconditions using `> [!IMPORTANT]` or `> [!NOTE]` callouts rather than burying them in parenthetical asides.
+
+**Protect the always-loaded context budget and keep a lightweight fast path.** Because `AGENTS.md` enters context on every turn, keep it concise—focusing on positioning tables, repository boundaries, and core rules while moving detailed multi-step procedures and templates into Skill `references/` and `assets/`. Over-specifying long procedural steps in the always-loaded entrypoint dilutes rule salience and adds unnecessary procedural overhead to every session. For localized single-file edits that do not alter public interfaces, schemas, or cross-file contracts, allow a direct fast path that skips multi-stage upfront planning via [brainstorm-and-plan.md](../methods/brainstorm-and-plan.md) while still applying work-item criteria per [Core Rule 03](03-task-ticket-discipline.md) and running the final deterministic verification command.
 
 ### 3. Own Output vs. External Reference (`docs/` vs. `references/`)
 

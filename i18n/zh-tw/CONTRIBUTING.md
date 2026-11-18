@@ -63,7 +63,7 @@ python3 skills/deliverable-writing-audit/scripts/detect.py .
 ```
 
 確認以下項目通過：
-- 結構檢查：YAML Frontmatter 格式合法，`description` 清楚載明觸發條件與不適用邊界；所有 Markdown 相對連結均可正常解析。
+- 結構檢查：YAML Frontmatter 格式合法，`description` 載明引號觸發語句與排除時機且不含禁用詞，所有 Markdown 相對連結均可依精確大小寫解析，且 `references/`、`assets/` 與 `scripts/` 底下檔案皆可從 `SKILL.md` 觸及。
 - 書寫稽核：輸出為 0 處命中。有命中時逐條對照徵狀目錄的例外判讀，並在 PR 說明放過的理由。
 
 另外請人工確認：提交的腳本或工具維持純 Python 3 標準庫，無任何外部 pip 套件依賴。
